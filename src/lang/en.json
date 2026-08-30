@@ -25,11 +25,13 @@
   "pipeWrong": "nothing.",
   "pipeRight": "click. the door unlocked.",
   "remade": "reassembled.",
-  "endT": "end of prototype",
-  "endB": "the journey of becoming human continues...",
+  "endT": "END OF PROTOTYPE",
+  "endB": "brain, eye and ear. twenty-three parts to go — and a whole city.",
   "again": "restart",
   "pause": "PAUSED",
   "resume": "resume",
   "restart": "restart",
-  "langBtn": "Português"
+  "langBtn": "Português",
+  "resumed": "resuming",
+  "cityThought": "there is no ceiling.\nand still, something out here weighs more than the lab did."
 }

@@ -21,7 +21,10 @@ O prólogo às cegas é UMA cena completa (Gepeto existe, a morte acontece), ape
 - `src/i18n.js` — carregador de idiomas; `T(chave)` para todo texto
 - `src/lang/*.json` — dicionários (pt-BR é o principal; en; multilíngue por design)
 - `src/audio.js` — `Snd`: WebAudio sintetizado; só toca após `Snd.enable()` (aquisição da Orelha)
-- `src/scenes.js` — TitleScene + GameScene (prólogo → olho → orelha → puzzle sonoro)
+- `src/save.js` — `Save`: localStorage. A flag `finished` é o gatilho do replay do prólogo (GDD 2.2b)
+- `src/parts.js` — `Parts`: registro das partes do corpo. Substitui booleanos soltos; todo registro tem `cost`
+- `src/world.js` — `WORLD`: mapa data-driven (zonas de câmera, chão, plataformas, props) + `zoneAt(x)`
+- `src/scenes.js` — TitleScene + GameScene (prólogo → olho → orelha → puzzle sonoro → saída para a cidade)
 - `src/main.js` — boot (espera fontes + i18n)
 - `docs/GDD.md` — game design document, fonte da verdade
 - `docs/arte/` — direção de arte: `ASSETS.md` (o que falta desenhar + prompts) e `referencias/` (folhas canônicas)
@@ -36,6 +39,10 @@ O prólogo às cegas é UMA cena completa (Gepeto existe, a morte acontece), ape
 - Controles: ◀▶ mover, ▲/W pular (pulo baixo — pernas de lata), espaço/E interagir. Touch: botões na tela, interação só aparece em contexto.
 - Sem dependências novas sem necessidade real; o jogo deve rodar abrindo `index.html` num servidor estático.
 - Testar sempre em viewport mobile paisagem (960×540 FIT).
+- **Cenário novo vai em `src/world.js`, nunca cravado no `create()`.** O `create()` interpreta dados; se você está escrevendo coordenadas dentro dele, está no arquivo errado.
+- **Duas câmeras:** `this.cam` (mundo, com zoom por zona) e `this.uiCam` (fixa em 1). Todo objeto de UI criado depois do `create()` precisa passar por `this.ui(obj)`, senão renderiza duas vezes e o zoom o deforma.
+- Zoom é linguagem: interior aproxima (o robô enche a sala), exterior afasta (a cidade é grande e ele é pequeno). Ajustar em `WORLD.zones`.
+- Sentido nunca é booleano solto: `Parts.has('eye')`, não `this.hasEye = true`. Aquisição é `Parts.acquire(id)`, que persiste sozinho.
 
 ## Rodar localmente
 
@@ -43,4 +50,8 @@ Servidor estático na raiz (fetch dos JSONs exige http): `python3 -m http.server
 
 ## Estado atual / próximos passos
 
-Slice do início pronto (prólogo, cérebro, olho, orelha, puzzle do tique-taque). Próximos: mapa data-driven (Tiled/LDtk), save (localStorage), gerenciador de partes do corpo, passe de arte do prólogo, matriz habilidade × mapa. Ver seção 8+ do GDD.
+Pronto: prólogo às cegas, cérebro, olho, orelha, puzzle do tique-taque, saída para a cidade. Arte em nanquim procedural. Mapa data-driven com zonas de câmera. Save em localStorage com "continuar" (quem tem o olho não repete o prólogo). Registro de partes do corpo.
+
+Próximos, em ordem: mais áreas no `WORLD` rumo ao Ground (GDD seção 3); matriz habilidade × mapa com o primeiro atalho destravável (seção 8, item 1); Pernas N1 como terceira aquisição, para provar o gerenciador de partes com uma habilidade de movimento; replay do prólogo pós-créditos, que já tem gatilho (`Save.finished`) mas não tem implementação.
+
+Adiado a pedido: passe de arte do prólogo e do Gepeto — é a última cena a ser produzida. **Atenção:** adiar a ARTE é seguro; o que não pode é virar uma cena separada. O prólogo às cegas e o replay revelador têm de continuar sendo a MESMA cena com camadas ligadas/desligadas (GDD 2.2).

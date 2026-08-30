@@ -203,6 +203,8 @@ Foco em exploração, plataforma e puzzles (Machinarium/Inside). Regra absoluta:
 - **Mapas:** Tiled ou LDtk (editor gratuito, ótimo para metroidvania; Phaser importa nativo).
 - **Empacotamento futuro:** Capacitor → Android/iOS nas lojas.
 - **Controles touch:** joystick virtual esquerdo + 2 botões direita (pulo/ação); mapear tudo também para teclado (testes no PC).
+- **Zonas de câmera ✔ DECIDIDO:** o mapa é contínuo (metroidvania: sem tela de transição entre salas). O que muda por área é o **zoom**: interior aproxima, exterior afasta. Não é conforto, é linguagem — o mesmo robô que enche um laboratório some numa avenida, e a mudança de escala é o que o jogador sente ao sair pela primeira vez. Duas câmeras: a do mundo tem zoom, a da UI fica travada em 1, senão a máscara de meia tela do Olho N1 escalaria junto. Zonas em `src/world.js`.
+- **Mapa data-driven ✔ DECIDIDO:** formato próprio em `src/world.js` (zonas, chão, plataformas, props, imagens), não Tiled/LDtk. Motivo: o mapa ainda é pequeno e o custo de um editor externo — pipeline de import, tileset, build — supera o ganho enquanto couber num arquivo legível. Migrar para LDtk quando o mapa passar de ~10 áreas ou quando alguém que não programa for editar.
 - **Save:** localStorage no protótipo → save nativo via Capacitor depois. O save guarda flag de "jogo terminado" para habilitar o replay revelador do prólogo.
 - **Idiomas (i18n) ✔ DECIDIDO:** PT-BR principal + EN desde o dia 1, troca no menu de pausa. Arquitetura: nenhum texto hardcoded — todo texto vem de dicionários JSON por idioma (`pt-BR.json`, `en.json`), chaveados por ID (`dialog.gepeto.01`). Adicionar um idioma novo = adicionar um arquivo. Fonte com suporte a acentos/diacríticos desde o início.
 
@@ -218,6 +220,8 @@ Objetivo: provar o conceito único (sentidos do jogador) em ~10 min de jogo.
 6. Rodando no navegador do seu celular.
 
 Se o slice divertir, o resto é produção. Se não divertir, descobrimos barato.
+
+**Andamento:** itens 2, 3, 4, 5 e 6 feitos. O item 1 está parcial — o mapa já é data-driven e tem 5 zonas (laboratório, duto, sala dos canos, soleira, cidade), mas em corredor linear: faltam a interconexão e o atalho destravável, que são o que faz o mapa virar metroidvania. É o próximo gargalo.
 
 ## 9. Ordem de aquisição das partes ✔ DECIDIDO (princípio, não lista)
 

@@ -25,11 +25,13 @@
   "pipeWrong": "nada.",
   "pipeRight": "clique. a porta destravou.",
   "remade": "remontado.",
-  "endT": "fim do protótipo",
-  "endB": "a jornada de virar humano continua...",
+  "endT": "FIM DO PROTÓTIPO",
+  "endB": "cérebro, olho e orelha. faltam vinte e três partes — e uma cidade inteira.",
   "again": "recomeçar",
   "pause": "PAUSA",
   "resume": "continuar",
   "restart": "recomeçar",
-  "langBtn": "English"
+  "langBtn": "English",
+  "resumed": "continuando",
+  "cityThought": "não há teto.\ne ainda assim alguma coisa aqui pesa mais que o laboratório."
 }

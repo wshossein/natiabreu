@@ -195,46 +195,64 @@ class GameScene extends Phaser.Scene {
     });
   }
 
+  /* Marca um objeto como UI: sai da câmera do mundo, logo é imune ao zoom.
+     Todo objeto criado depois do create() precisa passar por aqui, ou vai
+     renderizar duas vezes. */
+  ui(o) { this.uiObjs.push(o); if (this.cam) this.cam.ignore(o); return o; }
+
+  /* Os sentidos vêm do registro de partes, nunca de booleanos soltos: a
+     interface É o corpo do robô, então quem responde "enxerga?" é o corpo. */
+  get hasBrain() { return Parts.has('brain'); }
+  get hasEye()   { return Parts.has('eye'); }
+  get hasEar()   { return Parts.has('ear'); }
+
   create() {
     this.makeTextures();
     this.cameras.main.setBackgroundColor('#0a0a0c');
 
-    /* estado */
-    this.pushed = false; this.hasBrain = false; this.hasEye = false; this.hasEar = false;
-    this.doorOpen = false; this.ended = false; this.paused = false;
-    this.checkpoint = { x: 120, y: GROUND_Y - 40 };
+    /* estado — parte vem do save, parte é da sessão */
+    Save.load(); Parts.hydrate();
+    this.pushed = Parts.has('eye');           // quem tem o olho já deu o empurrão
+    this.doorOpen = Save.flag('doorOpen');
+    this.ended = false; this.paused = false;
+    this.checkpoint = Save.get('spawn') || { x: WORLD.spawn.x, y: WORLD.spawn.y };
     this.lastToast = 0; this.stepAcc = 0; this.movedFar = false; this.d1open = false;
+    this.sawCity = false;
 
-    /* ---------- fundo (parallax + engrenagens) ---------- */
-    for (let x = 40; x < W; x += 190) {
+    /* ---------- mundo: construído a partir de src/world.js ---------- */
+    this.uiObjs = [];
+    this.solids = [];
+
+    // fundo por zona: cada decor desenha o que é seu
+    WORLD.zones.forEach(z => {
+      const x0 = Math.max(0, z.x0), x1 = Math.min(WORLD.w, z.x1);
+      if (z.decor === 'lab') {
+        for (let x = x0 + 100; x < x1; x += 260) {
+          this.add.rectangle(x, 240, 14, 480, 0x14141a).setDepth(1);
+          this.add.circle(x, 120, 2, 0x2a2a32).setDepth(1);
+          this.add.circle(x, 360, 2, 0x2a2a32).setDepth(1);
+        }
+        const cable = this.add.graphics().setDepth(1);
+        cable.lineStyle(2, 0x1c1c24);
+        for (let x = x0 + 100; x < x1 - 200; x += 520) {
+          cable.beginPath(); cable.moveTo(x, 60);
+          for (let i = 0; i <= 20; i++) {
+            const t = i / 20;
+            cable.lineTo(x + t * 520, 60 + Math.sin(t * Math.PI) * 46);
+          }
+          cable.strokePath();
+        }
+      }
+    });
+    // faixas verticais de parallax só onde é interior
+    for (let x = 40; x < 1500; x += 190) {
       this.add.rectangle(x, H / 2, 22, H, 0x0e0e13).setScrollFactor(0.35).setDepth(0);
     }
-    this.gears = [
-      this.add.image(620, 130, 'gear').setDepth(0).setScrollFactor(0.6).setScale(1.2 * AS),
-      this.add.image(1560, 100, 'gear').setDepth(0).setScrollFactor(0.6).setScale(0.8 * AS),
-      this.add.image(2380, 150, 'gear').setDepth(0).setScrollFactor(0.6).setScale(AS),
-      this.add.image(3050, 110, 'gear').setDepth(0).setScrollFactor(0.6).setScale(1.4 * AS)
-    ];
-    // colunas próximas com rebites
-    for (let x = 100; x < 3600; x += 260) {
-      this.add.rectangle(x, 240, 14, 480, 0x14141a).setDepth(1);
-      this.add.circle(x, 120, 2, 0x2a2a32).setDepth(1);
-      this.add.circle(x, 360, 2, 0x2a2a32).setDepth(1);
-    }
-    // cabos que penduram entre colunas
-    const cable = this.add.graphics().setDepth(1);
-    cable.lineStyle(2, 0x1c1c24);
-    for (let x = 100; x < 3400; x += 520) {
-      cable.beginPath(); cable.moveTo(x, 60);
-      for (let i = 0; i <= 20; i++) {
-        const t = i / 20;
-        cable.lineTo(x + t * 520, 60 + Math.sin(t * Math.PI) * 46);
-      }
-      cable.strokePath();
-    }
 
-    /* ---------- sólidos ---------- */
-    this.solids = [];
+    this.gears = WORLD.gears.map(([x, y, s]) =>
+      this.add.image(x, y, 'gear').setDepth(0).setScrollFactor(0.6).setScale(s * AS));
+
+    /* sólidos */
     const solid = (x, y, w, h, color, depth) => {
       const r = this.add.rectangle(x, y, w, h, color === undefined ? 0x26262c : color);
       r.setDepth(depth === undefined ? 2 : depth);
@@ -242,63 +260,52 @@ class GameScene extends Phaser.Scene {
       this.solids.push(r);
       return r;
     };
-    solid(850, GROUND_Y + 30, 1700, 60);
-    solid(2010, GROUND_Y + 30, 380, 60);
-    solid(2975, GROUND_Y + 30, 1250, 60);
-    solid(30, 300, 20, 400);
-    // faixa superior do chão (acabamento)
-    [[850, 1700], [2010, 380], [2975, 1250]].forEach(([cx, w]) =>
-      this.add.rectangle(cx, GROUND_Y + 3, w, 6, 0x33333c).setDepth(2));
-
-    // caixote e plataformas
-    const crate = this.add.image(1600, GROUND_Y - 25, 'crate').setDepth(3).setScale(AS);
-    this.physics.add.existing(crate, true); this.solids.push(crate);
-    const plat = (x, y, w) => {
-      const p = solid(x, y, w, 12, 0x3a3a44, 3);
+    WORLD.ground.forEach(([cx, w]) => {
+      solid(cx, GROUND_Y + 30, w, 60);
+      this.add.rectangle(cx, GROUND_Y + 3, w, 6, 0x33333c).setDepth(2);   // acabamento
+    });
+    WORLD.walls.forEach(([x, y, w, h]) => solid(x, y, w, h));
+    WORLD.platforms.forEach(([x, y, w]) => {
+      solid(x, y, w, 12, 0x3a3a44, 3);
       this.add.rectangle(x, y - 7, w, 3, 0x50505a).setDepth(3);
-      return p;
-    };
-    plat(1760, 430, 70); plat(1955, 405, 90); plat(2275, 420, 80);
+    });
 
-    /* ---------- laboratório de Gepeto ---------- */
-    this.add.rectangle(1080, GROUND_Y - 26, 210, 46, 0x30303a).setDepth(6);   // bancada
-    this.add.rectangle(1080, GROUND_Y - 52, 220, 8, 0x44444e).setDepth(6);
-    this.add.rectangle(995, GROUND_Y - 15, 10, 30, 0x22222a).setDepth(6);     // pés
-    this.add.rectangle(1165, GROUND_Y - 15, 10, 30, 0x22222a).setDepth(6);
-    this.add.rectangle(1035, GROUND_Y - 62, 26, 8, 0x55555c).setDepth(7);     // ferramentas
-    this.add.circle(1070, GROUND_Y - 62, 5, 0x62626a).setDepth(7);
-    this.add.rectangle(1250, GROUND_Y - 80, 90, 160, 0x1d1d24).setDepth(8);   // armário (oclusor do twist)
-    this.add.rectangle(1250, GROUND_Y - 80, 78, 148, 0x23232b).setDepth(8);
-    this.add.rectangle(1010, 250, 4, 70, 0x2a2a32).setDepth(5);               // luminária
-    this.add.circle(1010, 292, 14, 0x3f3a2c).setDepth(5);
-    this.add.triangle(1010, 380, 0, 0, 60, 176, -60, 176, 0xd9a441, 0.05).setDepth(5); // cone de luz
-    this.add.rectangle(1100, GROUND_Y - 62, 18, 22, 0x55555c).setDepth(7);    // porta-retrato
-    this.add.rectangle(1100, GROUND_Y - 62, 12, 16, 0x777780).setDepth(7);
+    /* cenário */
+    WORLD.props.forEach(o => {
+      let g;
+      if (o.t === 'rect')        g = this.add.rectangle(o.x, o.y, o.w, o.h, o.c, o.a);
+      else if (o.t === 'circle') g = this.add.circle(o.x, o.y, o.r, o.c, o.a);
+      else if (o.t === 'tri')    g = this.add.triangle(o.x, o.y, ...o.pts, o.c, o.a);
+      else return;
+      g.setDepth(o.d || 0);
+      if (o.sf !== undefined) g.setScrollFactor(o.sf);
+    });
+    WORLD.images.forEach(o => {
+      const im = this.add.image(o.x, o.y, o.key).setDepth(o.d || 3).setScale(AS);
+      if (o.solid) { this.physics.add.existing(im, true); this.solids.push(im); }
+    });
 
-    // GEPETO — presente desde o dia 1 (mascarado na 1ª jogada)
+    /* GEPETO — presente desde o dia 1, mascarado na 1ª jogada */
     this.gepeto = this.add.image(1000, GROUND_Y - 29, 'gepeto').setDepth(4).setScale(AS);
 
-    /* portas e itens */
+    /* portas */
     this.door1 = this.add.image(1390, GROUND_Y - 61, 'door').setDepth(5).setScale(AS);
     this.physics.add.existing(this.door1, true); this.solids.push(this.door1);
     this.door3 = this.add.image(3310, GROUND_Y - 61, 'door').setDepth(5).setScale(AS);
     this.physics.add.existing(this.door3, true); this.solids.push(this.door3);
 
-    this.add.rectangle(2480, GROUND_Y - 14, 46, 28, 0x30303a).setDepth(3);
-    this.add.rectangle(2480, GROUND_Y - 30, 54, 6, 0x44444e).setDepth(3);
+    /* orelha */
     this.earItem = this.add.image(2480, GROUND_Y - 52, 'ear').setDepth(5).setScale(AS);
     this.tweens.add({ targets: this.earItem, y: GROUND_Y - 60, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
 
-    this.pipes = [2750, 2950, 3150].map(x => {
+    this.pipes = WORLD.pipes.map(x => {
       const p = this.add.image(x, GROUND_Y - 75, 'pipe').setDepth(3).setScale(AS);
       p.px = x; return p;
     });
-    this.tickPipe = this.pipes[Math.floor(Math.random() * 3)];
-
-    this.add.rectangle(3560, 260, 120, 560, 0x3a3628, 0.35).setDepth(1);      // luz do fim
+    this.tickPipe = this.pipes[Math.floor(Math.random() * this.pipes.length)];
 
     /* ---------- robô: física + corpo segmentado ---------- */
-    this.robot = this.physics.add.image(120, GROUND_Y - 40, 'r_torso').setVisible(false);
+    this.robot = this.physics.add.image(this.checkpoint.x, this.checkpoint.y, 'r_torso').setVisible(false);
     this.robot.body.setSize(26, 46);
     this.physics.add.collider(this.robot, this.solids);
 
@@ -308,7 +315,7 @@ class GameScene extends Phaser.Scene {
     this.legR = this.add.image(5, 7, 'r_leg').setOrigin(.5, .08).setScale(AS);
     this.armR = this.add.image(12, -10, 'r_arm').setOrigin(.5, .08).setScale(AS);
     this.headImg = this.add.image(0, -20, 'r_head').setScale(AS);
-    this.robotC = this.add.container(120, GROUND_Y - 40,
+    this.robotC = this.add.container(this.checkpoint.x, this.checkpoint.y,
       [this.armL, this.legL, this.torsoImg, this.legR, this.armR, this.headImg]).setDepth(10);
     // tique de cabeça no idle (curioso, mecânico)
     this.time.addEvent({
@@ -321,14 +328,26 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    /* câmera */
-    this.cameras.main.setBounds(0, 0, 3600, 540);
-    this.cameras.main.startFollow(this.robot, true, 0.15, 0.15, -240, 0);
+    /* ---------- câmeras ----------
+       Duas, e por um motivo: a do mundo tem zoom por zona, a da UI fica
+       travada em 1. Com uma só, o zoom escalaria junto as máscaras dos
+       sentidos — e a máscara de meia tela é o efeito assinatura do jogo,
+       não pode respirar com a câmera. */
+    this.cam = this.cameras.main;
+    this.cam.setBounds(0, 0, WORLD.w, WORLD.h);
+    this.zone = zoneAt(this.robot.x);
+    this.cam.setZoom(this.zone.zoom);
+    this.cam.startFollow(this.robot, true, 0.15, 0.10);
+    this.cam.setFollowOffset(-240 / this.zone.zoom, 0);   // folga à frente, em unidades de mundo
+    this.cam.setDeadzone(40, 190);                        // vertical calmo: não balança no pulo
 
-    /* ---------- máscaras dos sentidos ---------- */
-    this.coverL = this.add.rectangle(0, 0, W / 2 + 2, H, 0x000000).setOrigin(0).setScrollFactor(0).setDepth(500);
-    this.coverR = this.add.rectangle(W / 2, 0, W / 2 + 2, H, 0x000000).setOrigin(0).setScrollFactor(0).setDepth(500);
-    this.divider = this.add.rectangle(W / 2, H / 2, 2, H, 0x2a2a30).setScrollFactor(0).setDepth(501).setAlpha(0);
+    this.uiCam = this.cameras.add(0, 0, W, H);
+    this.uiCam.setName('ui');
+
+    /* ---------- máscaras dos sentidos (espaço de tela) ---------- */
+    this.coverL = this.ui(this.add.rectangle(0, 0, W / 2 + 2, H, 0x000000).setOrigin(0).setScrollFactor(0).setDepth(500));
+    this.coverR = this.ui(this.add.rectangle(W / 2, 0, W / 2 + 2, H, 0x000000).setOrigin(0).setScrollFactor(0).setDepth(500));
+    this.divider = this.ui(this.add.rectangle(W / 2, H / 2, 2, H, 0x2a2a30).setScrollFactor(0).setDepth(501).setAlpha(0));
 
     /* ---------- UI ---------- */
     this.buildUI();
@@ -356,11 +375,19 @@ class GameScene extends Phaser.Scene {
         on: () => this.hasEye && !this.doorOpen, cb: () => this.tryPipe(p)
       }))
     ];
+
+    /* separa as camadas: o que é UI já saiu da câmera do mundo; agora a
+       câmera da UI deixa de ver tudo que é mundo. */
+    const uiSet = new Set(this.uiObjs);
+    this.uiCam.ignore(this.children.list.filter(o => !uiSet.has(o)));
+
+    /* jogo já em andamento: pula o prólogo às cegas e devolve os sentidos */
+    if (Parts.has('eye')) this.resumeFromSave();
   }
 
   /* ---------- UI ---------- */
   buildUI() {
-    const sf = o => o.setScrollFactor(0);
+    const sf = o => this.ui(o.setScrollFactor(0));
     this.uiCX = W / 2; // centro da área visível (vira W/4 após o olho)
 
     this.thoughtTxt = sf(this.add.text(W / 2, 210, '', {
@@ -433,6 +460,7 @@ class GameScene extends Phaser.Scene {
     const t2 = this.add.text(cx, 238, T(descKey), {
       fontFamily: FONT, fontSize: '18px', color: DIM
     }).setOrigin(.5).setScrollFactor(0).setDepth(710).setAlpha(0);
+    this.ui(t1); this.ui(t2);
     this.tweens.add({
       targets: [t1, t2], alpha: 1, duration: 700, yoyo: true, hold: holdMs || 3400,
       onComplete: () => { t1.destroy(); t2.destroy(); }
@@ -451,7 +479,7 @@ class GameScene extends Phaser.Scene {
     this.time.delayedCall(500, () => vib(220));
 
     // CÉREBRO adquirido — só agora existem pensamentos
-    this.time.delayedCall(2200, () => { this.hasBrain = true; this.banner('brainGet', 'brainDesc', 3600); });
+    this.time.delayedCall(2200, () => { Parts.acquire('brain'); this.banner('brainGet', 'brainDesc', 3600); });
     this.time.delayedCall(7400, () => this.thought(T('think1'), 3000));
     this.time.delayedCall(12200, () => this.thought(T('think2'), 3400));
     this.time.delayedCall(17600, () => this.thought(T('think3'), 3800));
@@ -461,6 +489,7 @@ class GameScene extends Phaser.Scene {
         fontFamily: MONO, fontSize: '17px', color: '#b8b8c0', align: 'center',
         wordWrap: { width: 620 }, lineSpacing: 9
       }).setOrigin(.5).setScrollFactor(0).setDepth(710).setAlpha(0);
+      this.ui(law);
       this.tweens.add({
         targets: law, alpha: 1, duration: 1500, yoyo: true, hold: 5600,
         onComplete: () => { law.destroy(); this.acquireEye(); }
@@ -470,17 +499,12 @@ class GameScene extends Phaser.Scene {
 
   acquireEye() {
     this.time.delayedCall(1200, () => {
-      this.hasEye = true;
+      Parts.acquire('eye');
       this.headImg.setTexture('r_head_eye');
       this.tweens.add({ targets: this.coverL, alpha: 0, duration: 2800, ease: 'Sine.inOut' });
       this.tweens.add({ targets: this.divider, alpha: .6, duration: 2800 });
       this.time.delayedCall(1500, () => this.banner('eyeGet', 'eyeDesc', 3400));
-      // UI migra para o centro da metade visível
-      this.uiCX = W / 4;
-      this.thoughtTxt.setX(W / 4);
-      this.toastTxt.setX(W / 4);
-      this.hint.setX(W / 4);
-      this.actionHint.setX(W / 4);
+      this.narrowUI();
       this.time.delayedCall(5200, () => {
         this.hint.setText(T('hintJump')).setAlpha(0);
         this.tweens.add({ targets: this.hint, alpha: .85, duration: 700, yoyo: true, hold: 3400, onComplete: () => this.hint.setText('') });
@@ -489,13 +513,29 @@ class GameScene extends Phaser.Scene {
   }
 
   acquireEar() {
-    if (this.hasEar) return;
-    this.hasEar = true;
+    if (!Parts.acquire('ear')) return;
     this.earItem.destroy();
     Snd.enable();
     this.time.delayedCall(600, () => Snd.chime());
     this.banner('earGet', 'earDesc', 3400);
     vib([30, 40, 30]);
+    this.startTick();
+  }
+
+  /* Com o olho nível 1, só metade da tela existe: a UI migra para o centro
+     dessa metade E encolhe a quebra de linha. Sem encolher, o texto vaza
+     para o lado cego — que é justamente o que o jogador não pode ler. */
+  narrowUI() {
+    this.uiCX = W / 4;
+    [this.thoughtTxt, this.toastTxt, this.hint, this.actionHint].forEach(t => t.setX(W / 4));
+    this.thoughtTxt.setWordWrapWidth(400);
+    this.toastTxt.setWordWrapWidth(400);
+  }
+
+  /* O tique-taque do puzzle. Separado porque o "continuar" precisa religá-lo
+     sem repetir a cena de aquisição da orelha. */
+  startTick() {
+    if (this.tickTimer) return;
     this.tickTimer = this.time.addEvent({
       delay: 800, loop: true,
       callback: () => {
@@ -506,10 +546,30 @@ class GameScene extends Phaser.Scene {
     });
   }
 
+  /* Continuar: o save tem partes, então o prólogo às cegas já foi vivido.
+     Reconstrói o estado em vez de repetir a cena — o prólogo é único, e só
+     se revê no replay pós-créditos (GDD 2.2b). */
+  resumeFromSave() {
+    this.hammerTimer.remove();
+    this.hint.setText('');
+    this.headImg.setTexture('r_head_eye');
+    this.coverL.setAlpha(0);
+    this.divider.setAlpha(.6);
+    this.narrowUI();
+    // Gepeto caído: o mundo lembra do que aconteceu, mesmo que o robô não
+    this.gepeto.setPosition(1225, GROUND_Y - 12).setAngle(90);
+    this.d1open = true;
+    this.door1.y -= 118; this.door1.body.enable = false;
+    if (Parts.has('ear')) { this.earItem.destroy(); Snd.enable(); this.startTick(); }
+    if (this.doorOpen) { this.door3.y -= 118; this.door3.body.enable = false; }
+    this.toast(T('resumed'), 2200);
+  }
+
   tryPipe(p) {
     if (this.doorOpen) return;
     if (p === this.tickPipe && this.hasEar) {
       this.doorOpen = true;
+      Save.setFlag('doorOpen');
       Snd.clank(); vib([30, 30, 30]);
       this.toast(T('pipeRight'), 2600);
       this.tweens.add({ targets: this.door3, y: this.door3.y - 118, duration: 900, ease: 'Quad.out' });
@@ -543,18 +603,18 @@ class GameScene extends Phaser.Scene {
       this.physics.pause(); this.time.paused = true;
       const d = 900;
       this.pauseUI = [
-        this.add.rectangle(W / 2, H / 2, W, H, 0x000000, .78).setScrollFactor(0).setDepth(d),
-        this.add.text(W / 2, 150, T('pause'), { fontFamily: FONT, fontSize: '34px', color: INK, letterSpacing: 8 }).setOrigin(.5).setScrollFactor(0).setDepth(d + 1)
+        this.ui(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, .78).setScrollFactor(0).setDepth(d)),
+        this.ui(this.add.text(W / 2, 150, T('pause'), { fontFamily: FONT, fontSize: '34px', color: INK, letterSpacing: 8 }).setOrigin(.5).setScrollFactor(0).setDepth(d + 1))
       ];
       const btn = (y, label, cb) => {
         const t = this.add.text(W / 2, y, label, {
           fontFamily: FONT, fontSize: '20px', color: AMBER, letterSpacing: 3,
           backgroundColor: '#16161a', padding: { x: 26, y: 10 }
         }).setOrigin(.5).setScrollFactor(0).setDepth(d + 1).setInteractive({ useHandCursor: true });
-        t.on('pointerdown', cb); this.pauseUI.push(t); return t;
+        this.ui(t); t.on('pointerdown', cb); this.pauseUI.push(t); return t;
       };
       btn(240, T('resume'), () => this.togglePause());
-      btn(302, T('restart'), () => { this.closePause(); this.paused = false; this.time.paused = false; this.scene.restart(); });
+      btn(302, T('restart'), () => { Save.reset(); Parts.reset(); this.closePause(); this.paused = false; this.time.paused = false; this.scene.restart(); });
       btn(364, T('langBtn'), () => {
         setLang(LANG === 'pt' ? 'en' : 'pt');
         this.closePause(); this.paused = false; this.physics.resume(); this.time.paused = false;
@@ -570,17 +630,22 @@ class GameScene extends Phaser.Scene {
   endGame() {
     if (this.ended) return;
     this.ended = true;
+    /* `finished` é o gatilho do twist (GDD 2.2b): quem termina uma vez ganha
+       o direito de rever o prólogo com todos os sentidos. Ainda não há
+       replay implementado — mas a flag já é gravada, para o replay não
+       depender de o jogador terminar de novo. */
+    Save.set('finished', true);
     const d = 950;
-    const bg = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0).setScrollFactor(0).setDepth(d);
+    const bg = this.ui(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0).setScrollFactor(0).setDepth(d));
     this.tweens.add({ targets: bg, fillAlpha: 1, duration: 1600 });
     this.time.delayedCall(1700, () => {
-      this.add.text(W / 2, 210, T('endT'), { fontFamily: FONT, fontSize: '36px', color: INK, letterSpacing: 8 }).setOrigin(.5).setScrollFactor(0).setDepth(d + 1);
-      this.add.text(W / 2, 262, T('endB'), { fontFamily: FONT, fontSize: '18px', color: DIM }).setOrigin(.5).setScrollFactor(0).setDepth(d + 1);
-      const again = this.add.text(W / 2, 340, T('again'), {
+      this.ui(this.add.text(W / 2, 210, T('endT'), { fontFamily: FONT, fontSize: '36px', color: INK, letterSpacing: 8 }).setOrigin(.5).setScrollFactor(0).setDepth(d + 1));
+      this.ui(this.add.text(W / 2, 262, T('endB'), { fontFamily: FONT, fontSize: '18px', color: DIM }).setOrigin(.5).setScrollFactor(0).setDepth(d + 1));
+      const again = this.ui(this.add.text(W / 2, 340, T('again'), {
         fontFamily: FONT, fontSize: '20px', color: AMBER, letterSpacing: 3,
         backgroundColor: '#16161a', padding: { x: 26, y: 10 }
-      }).setOrigin(.5).setScrollFactor(0).setDepth(d + 1).setInteractive({ useHandCursor: true });
-      again.on('pointerdown', () => this.scene.restart());
+      }).setOrigin(.5).setScrollFactor(0).setDepth(d + 1).setInteractive({ useHandCursor: true }));
+      again.on('pointerdown', () => { Save.reset(); Parts.reset(); this.scene.restart(); });
     });
   }
 
@@ -602,6 +667,16 @@ class GameScene extends Phaser.Scene {
     /* --- animação segmentada: dura, mas viva --- */
     const c = this.robotC;
     c.setPosition(r.x, r.y);
+
+    /* zoom por zona: interior aproxima (o robô enche a sala), exterior afasta
+       (a cidade é grande e ele é pequeno). A folga da câmera à frente é
+       corrigida junto, senão o robô sai de quadro ao aproximar. */
+    const z = zoneAt(r.x);
+    if (z !== this.zone) {
+      this.zone = z;
+      this.cam.zoomTo(z.zoom, 1100, 'Sine.easeInOut');
+      this.tweens.add({ targets: this.cam.followOffset, x: -240 / z.zoom, duration: 1100, ease: 'Sine.easeInOut' });
+    }
     if (left) c.scaleX = -1; else if (right) c.scaleX = 1;
     const moving = left || right;
     if (!grounded) {                                     // pose de pulo: pernas recolhidas
@@ -645,14 +720,24 @@ class GameScene extends Phaser.Scene {
     if (!this.hasEar && this.hasEye && Math.abs(r.x - 2480) < 34 && r.y > GROUND_Y - 110) this.acquireEar();
 
     // porta 3 trancada
-    if (!this.doorOpen && r.x > 3250 && time - this.lastToast > 3000) {
+    if (!this.doorOpen && r.x > 3250 && r.x < 3480 && time - this.lastToast > 3000) {
       this.lastToast = time;
       this.toast(this.hasEar ? T('doorEar') : T('doorNoEar'), 2600);
     }
 
-    // checkpoints
-    if (r.x > 1420 && this.checkpoint.x < 1420) this.checkpoint = { x: 1430, y: GROUND_Y - 40 };
-    if (r.x > 2650 && this.checkpoint.x < 2650) this.checkpoint = { x: 2650, y: GROUND_Y - 40 };
+    // checkpoints (src/world.js) — salvos, para o "continuar" cair aqui
+    for (const cp of WORLD.checkpoints) {
+      if (r.x > cp.at && this.checkpoint.x < cp.x) {
+        this.checkpoint = { x: cp.x, y: cp.y };
+        Save.set('spawn', this.checkpoint);
+      }
+    }
+
+    // primeira vez lá fora: ele tem cérebro, então tem o que pensar
+    if (!this.sawCity && this.zone.kind === 'exterior') {
+      this.sawCity = true;
+      this.time.delayedCall(900, () => this.thought(T('cityThought'), 4200));
+    }
 
     // queda = remontagem (era lata: sem game over)
     if (r.y > 700) {
@@ -663,7 +748,7 @@ class GameScene extends Phaser.Scene {
     }
 
     // fim
-    if (this.doorOpen && r.x > 3480) this.endGame();
+    if (this.doorOpen && r.x > WORLD.finishX) this.endGame();
 
     // interação contextual (espaço/E, marcador no mundo, botão touch)
     let found = null;
