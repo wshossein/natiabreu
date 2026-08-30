@@ -26,12 +26,19 @@
   "pipeRight": "clique. a porta destravou.",
   "remade": "remontado.",
   "endT": "FIM DO PROTÓTIPO",
-  "endB": "cérebro, olho e orelha. faltam vinte e três partes — e uma cidade inteira.",
+  "endB": "cérebro, olho, orelha — e alguém que ficou. faltam vinte e três partes e uma cidade inteira.",
   "again": "recomeçar",
   "pause": "PAUSA",
   "resume": "continuar",
   "restart": "recomeçar",
   "langBtn": "English",
   "resumed": "continuando",
-  "cityThought": "não há teto.\ne ainda assim alguma coisa aqui pesa mais que o laboratório."
+  "cityThought": "não há teto.\ne ainda assim alguma coisa aqui pesa mais que o laboratório.",
+  "whoWoman": "MORADORA",
+  "womanGasp": "...santo Deus.",
+  "womanMonster": "MONSTRO! É O MONSTRO DO LABORATÓRIO!",
+  "thinkMonster1": "eu não fiz nada.\neu só saí.",
+  "thinkMonster2": "ela sabe o que eu sou.\neu não.",
+  "thinkDog1": "esse não correu.",
+  "thinkDog2": "não corre.\nnão grita.\nfica."
 }

@@ -26,12 +26,19 @@
   "pipeRight": "click. the door unlocked.",
   "remade": "reassembled.",
   "endT": "END OF PROTOTYPE",
-  "endB": "brain, eye and ear. twenty-three parts to go — and a whole city.",
+  "endB": "brain, eye, ear — and someone who stayed. twenty-three parts to go, and a whole city.",
   "again": "restart",
   "pause": "PAUSED",
   "resume": "resume",
   "restart": "restart",
   "langBtn": "Português",
   "resumed": "resuming",
-  "cityThought": "there is no ceiling.\nand still, something out here weighs more than the lab did."
+  "cityThought": "there is no ceiling.\nand still, something out here weighs more than the lab did.",
+  "whoWoman": "RESIDENT",
+  "womanGasp": "...dear God.",
+  "womanMonster": "MONSTER! IT'S THE MONSTER FROM THE LAB!",
+  "thinkMonster1": "I did nothing.\nI only walked out.",
+  "thinkMonster2": "she knows what I am.\nI don't.",
+  "thinkDog1": "this one didn't run.",
+  "thinkDog2": "doesn't run.\ndoesn't scream.\nstays."
 }

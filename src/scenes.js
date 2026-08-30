@@ -139,6 +139,41 @@ class GameScene extends Phaser.Scene {
       g.lineBetween(17, 20, 17, 44);                                     // fecho do casaco
     });
 
+    /* -- elenco do Ato 1 -- */
+    mk('mulher', 30, 56, g => {                                          // moradora: xale e lampião
+      g.fillStyle(DARK_N, 1);
+      g.fillTriangle(15, 18, 3, 52, 27, 52);                             // saia/xale
+      g.fillStyle(FILL_N, 1); g.fillCircle(15, 10, 6.6);                 // cabeça
+      hatch(g, 16, 22, 9, 26, 2.4);
+      line(g, 0.9);
+      g.strokeCircle(15, 10, 6.6);
+      g.strokeTriangle(15, 18, 3, 52, 27, 52);
+      line(g, 0.6); g.lineBetween(8, 15, 22, 15);                        // gola do xale
+      g.lineBetween(24, 26, 27.5, 34);                                   // braço do lampião
+      g.fillStyle(0x3f3a2c, 1); g.fillCircle(27.5, 37, 3.4);             // lampião: luz, não interação
+      line(g, 0.6); g.strokeCircle(27.5, 37, 3.4);
+    });
+
+    mk('dog', 26, 16, g => {                                             // o Dog: o primeiro vínculo
+      g.fillStyle(FILL_N, 1);
+      g.fillRoundedRect(4, 4, 14, 7, 3);                                 // corpo
+      g.fillCircle(20, 5.5, 4);                                          // cabeça
+      g.fillStyle(DARK_N, 1);
+      g.fillRect(5.5, 10, 2.2, 5); g.fillRect(9, 10, 2.2, 5);            // patas
+      g.fillRect(13, 10, 2.2, 5); g.fillRect(16, 10, 2.2, 5);
+      hatch(g, 8, 5, 8, 5, 2);
+      line(g, 0.8);
+      g.strokeRoundedRect(4, 4, 14, 7, 3);
+      g.strokeCircle(20, 5.5, 4);
+      line(g, 0.7);
+      g.strokeRect(5.5, 10, 2.2, 5); g.strokeRect(9, 10, 2.2, 5);
+      g.strokeRect(13, 10, 2.2, 5); g.strokeRect(16, 10, 2.2, 5);
+      g.fillStyle(LINE_N, 1);
+      g.fillTriangle(21, 1.5, 18.5, 4.5, 22.5, 4.5);                     // orelha em pé
+      g.fillCircle(22.6, 6, .7);                                         // olho
+      line(g, 0.8); g.lineBetween(4, 5, 1, 1.5);                         // rabo
+    });
+
     mk('ear', 26, 26, g => {                                             // item: âmbar = aquisição
       g.lineStyle(1.4, AMBER_N, 1); g.strokeCircle(13, 13, 9);
       g.lineStyle(1.0, AMBER_N, 1); g.strokeCircle(13, 13, 5);
@@ -217,7 +252,6 @@ class GameScene extends Phaser.Scene {
     this.ended = false; this.paused = false;
     this.checkpoint = Save.get('spawn') || { x: WORLD.spawn.x, y: WORLD.spawn.y };
     this.lastToast = 0; this.stepAcc = 0; this.movedFar = false; this.d1open = false;
-    this.sawCity = false;
 
     /* ---------- mundo: construído a partir de src/world.js ---------- */
     this.uiObjs = [];
@@ -381,6 +415,8 @@ class GameScene extends Phaser.Scene {
     const uiSet = new Set(this.uiObjs);
     this.uiCam.ignore(this.children.list.filter(o => !uiSet.has(o)));
 
+    this.initStory();
+
     /* jogo já em andamento: pula o prólogo às cegas e devolve os sentidos */
     if (Parts.has('eye')) this.resumeFromSave();
   }
@@ -399,6 +435,15 @@ class GameScene extends Phaser.Scene {
     this.hint = sf(this.add.text(W / 2, 498, '', {
       fontFamily: FONT, fontSize: '26px', color: '#5a5a64', letterSpacing: 6
     }).setOrigin(.5).setDepth(700));
+
+    // diálogo de NPC: nome de quem fala + a linha
+    this.sayWho = sf(this.add.text(W / 2, 296, '', {
+      fontFamily: FONT, fontSize: '15px', color: '#6e6e78', letterSpacing: 5
+    }).setOrigin(.5).setDepth(700)).setAlpha(0);
+    this.sayTxt = sf(this.add.text(W / 2, 326, '', {
+      fontFamily: FONT, fontSize: '24px', color: INK,
+      align: 'center', wordWrap: { width: 400 }, lineSpacing: 8
+    }).setOrigin(.5).setDepth(700)).setAlpha(0);
 
     // rótulo da ação contextual: pequeno, junto ao tutorial, não tampa o cenário
     this.actionHint = sf(this.add.text(W / 2, 498, '', {
@@ -522,12 +567,114 @@ class GameScene extends Phaser.Scene {
     this.startTick();
   }
 
+  /* ---------- história: runtime dos beats (src/story.js) ----------
+     O dado descreve, isto interpreta. Nenhum beat mexe em scenes.js. */
+  initStory() {
+    this.npc = {};                 // id -> GameObject em cena
+    this.follower = null;          // quem anda atrás do robô
+    this.beatBusy = false;
+    this.followBob = 0;
+    // flags do save: beat já vivido não repete, nem em outra sessão
+    this.beats = STORY.map(b => ({ ...b, done: Save.flag(b.flag) }));
+  }
+
+  /* Objeto de mundo criado depois do create() precisa sair da câmera da UI,
+     senão renderiza nas duas. */
+  world(o) { if (this.uiCam) this.uiCam.ignore(o); return o; }
+
+  checkBeats(x) {
+    if (this.beatBusy || this.ended || this.paused) return;
+    for (const b of this.beats) {
+      if (b.done) continue;
+      if (b.needs && !b.needs.every(p => Parts.has(p))) continue;
+      if (b.at && x < b.at.x) continue;
+      b.done = true;
+      Save.setFlag(b.flag);
+      this.beatBusy = true;
+      this.runSteps(b.steps, 0);
+      return;
+    }
+  }
+
+  runSteps(steps, i) {
+    if (this.ended) { this.beatBusy = false; return; }
+    if (i >= steps.length) { this.beatBusy = false; return; }
+    const s = steps[i];
+    let d = s.ms || 0;
+
+    if (s.think !== undefined) {
+      d = s.ms || 3400;
+      this.thought(T(s.think), d);
+    } else if (s.say) {
+      this.say(s.say.who, s.say.key, s.ms || 2400);
+    } else if (s.spawn) {
+      const o = this.world(this.add.image(s.spawn.x, s.spawn.y, s.spawn.key).setDepth(9).setScale(AS));
+      o.setAlpha(0);
+      this.tweens.add({ targets: o, alpha: 1, duration: 400 });
+      this.npc[s.spawn.id] = o;
+    } else if (s.move) {
+      const o = this.npc[s.move.id];
+      if (o) {
+        o.setFlipX(s.move.x < o.x);
+        this.tweens.add({ targets: o, x: s.move.x, duration: s.move.ms || 1200, ease: 'Sine.easeInOut' });
+      }
+    } else if (s.face) {
+      const o = this.npc[s.face.id];
+      if (o) o.setFlipX(s.face.dir < 0);
+    } else if (s.exit) {
+      const o = this.npc[s.exit.id];
+      if (o) {
+        this.tweens.add({ targets: o, alpha: 0, duration: 400, onComplete: () => o.destroy() });
+        delete this.npc[s.exit.id];
+      }
+    } else if (s.follow) {
+      this.follower = this.npc[s.follow.id] || null;
+    } else if (s.vib) {
+      vib(s.vib);
+    }
+
+    this.time.delayedCall(d, () => this.runSteps(steps, i + 1));
+  }
+
+  /* Fala de NPC. Diferente de thought(): aquilo é a voz interna do robô,
+     isto é alguém de fora — por isso tem nome de quem fala e não é itálico. */
+  say(whoKey, lineKey, dur) {
+    const cx = this.uiCX;
+    this.sayWho.setX(cx).setText(T(whoKey));
+    this.sayTxt.setX(cx).setText(T(lineKey));
+    /* Zerar o alpha antes de animar não é detalhe: o yoyo volta para o valor
+       INICIAL do tween. Se uma fala substitui outra ainda visível, o tween
+       nasce em alpha 1 e o yoyo devolve a 1 — a legenda trava na tela. */
+    this.tweens.killTweensOf([this.sayWho, this.sayTxt]);
+    this.sayWho.setAlpha(0); this.sayTxt.setAlpha(0);
+    this.tweens.add({
+      targets: [this.sayWho, this.sayTxt], alpha: 1, duration: 260,
+      yoyo: true, hold: dur || 2400
+    });
+  }
+
+  /* O companheiro anda atrás, nunca à frente: quem guia é o jogador. */
+  updateFollower(dt) {
+    const f = this.follower;
+    if (!f || !f.scene) return;
+    const behind = this.robotC.scaleX < 0 ? 52 : -52;
+    const target = this.robot.x + behind;
+    const dx = target - f.x;
+    if (Math.abs(dx) > 12) {
+      f.x += Math.sign(dx) * Math.min(Math.abs(dx), 0.16 * dt);
+      f.setFlipX(dx < 0);
+      this.followBob += dt;
+      f.y = (GROUND_Y - 12) - (Math.abs(Math.sin(this.followBob / 90)) > .7 ? 3 : 0);
+    }
+  }
+
   /* Com o olho nível 1, só metade da tela existe: a UI migra para o centro
      dessa metade E encolhe a quebra de linha. Sem encolher, o texto vaza
      para o lado cego — que é justamente o que o jogador não pode ler. */
   narrowUI() {
     this.uiCX = W / 4;
-    [this.thoughtTxt, this.toastTxt, this.hint, this.actionHint].forEach(t => t.setX(W / 4));
+    [this.thoughtTxt, this.toastTxt, this.hint, this.actionHint,
+     this.sayWho, this.sayTxt].forEach(t => t.setX(W / 4));
     this.thoughtTxt.setWordWrapWidth(400);
     this.toastTxt.setWordWrapWidth(400);
   }
@@ -733,11 +880,9 @@ class GameScene extends Phaser.Scene {
       }
     }
 
-    // primeira vez lá fora: ele tem cérebro, então tem o que pensar
-    if (!this.sawCity && this.zone.kind === 'exterior') {
-      this.sawCity = true;
-      this.time.delayedCall(900, () => this.thought(T('cityThought'), 4200));
-    }
+    // história e companheiro
+    this.checkBeats(r.x);
+    this.updateFollower(dt);
 
     // queda = remontagem (era lata: sem game over)
     if (r.y > 700) {

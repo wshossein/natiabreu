@@ -87,8 +87,10 @@ const WORLD = {
 
   /* imagens de cenário: as que colidem entram em `solid` */
   images: [
-    { key: 'crate', x: 1600, y: GROUND_Y - 25, d: 3, solid: true },
-    { key: 'crate', x: 3980, y: GROUND_Y - 25, d: 3, solid: true }
+    { key: 'crate', x: 1600, y: GROUND_Y - 25, d: 3, solid: true }
+    /* Nada de sólido no nível do chão da avenida: a primeira saída para a
+       cidade é cena, não obstáculo. Um caixote no caminho vira parede — o
+       robô pula, mas parar a caminhada aqui atropela o beat. */
   ],
 
   /* engrenagens de fundo: [x, y, escala] */

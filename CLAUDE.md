@@ -24,6 +24,8 @@ O prólogo às cegas é UMA cena completa (Gepeto existe, a morte acontece), ape
 - `src/save.js` — `Save`: localStorage. A flag `finished` é o gatilho do replay do prólogo (GDD 2.2b)
 - `src/parts.js` — `Parts`: registro das partes do corpo. Substitui booleanos soltos; todo registro tem `cost`
 - `src/world.js` — `WORLD`: mapa data-driven (zonas de câmera, chão, plataformas, props) + `zoneAt(x)`
+- `src/story.js` — `STORY`: beats narrativos data-driven (gatilho + passos). Cena de história nova vai aqui, não em `scenes.js`
+- `docs/ATO1.md` — mapa de beats do Ato 1: o que está feito, o que falta, e os cuidados de cada um
 - `src/scenes.js` — TitleScene + GameScene (prólogo → olho → orelha → puzzle sonoro → saída para a cidade)
 - `src/main.js` — boot (espera fontes + i18n)
 - `docs/GDD.md` — game design document, fonte da verdade
@@ -42,6 +44,9 @@ O prólogo às cegas é UMA cena completa (Gepeto existe, a morte acontece), ape
 - **Cenário novo vai em `src/world.js`, nunca cravado no `create()`.** O `create()` interpreta dados; se você está escrevendo coordenadas dentro dele, está no arquivo errado.
 - **Duas câmeras:** `this.cam` (mundo, com zoom por zona) e `this.uiCam` (fixa em 1). Todo objeto de UI criado depois do `create()` precisa passar por `this.ui(obj)`, senão renderiza duas vezes e o zoom o deforma.
 - Zoom é linguagem: interior aproxima (o robô enche a sala), exterior afasta (a cidade é grande e ele é pequeno). Ajustar em `WORLD.zones`.
+- **História é dado.** Beat novo é entrada em `src/story.js`; o runtime já interpreta `think`, `say`, `spawn`, `move`, `face`, `exit`, `follow`, `vib`, `wait`. Se você está escrevendo cutscene dentro do `scenes.js`, está no arquivo errado.
+- `thought()` é a voz interna do robô (itálico, sem nome); `say()` é fala de NPC (com nome de quem fala). Não misturar: um só existe porque ele tem cérebro, o outro vem de fora.
+- Objeto de mundo criado depois do `create()` precisa passar por `this.world(obj)`, assim como UI passa por `this.ui(obj)`. Sem isso ele renderiza nas duas câmeras.
 - Sentido nunca é booleano solto: `Parts.has('eye')`, não `this.hasEye = true`. Aquisição é `Parts.acquire(id)`, que persiste sozinho.
 
 ## Rodar localmente
@@ -52,6 +57,6 @@ Servidor estático na raiz (fetch dos JSONs exige http): `python3 -m http.server
 
 Pronto: prólogo às cegas, cérebro, olho, orelha, puzzle do tique-taque, saída para a cidade. Arte em nanquim procedural. Mapa data-driven com zonas de câmera. Save em localStorage com "continuar" (quem tem o olho não repete o prólogo). Registro de partes do corpo.
 
-Próximos, em ordem: mais áreas no `WORLD` rumo ao Ground (GDD seção 3); matriz habilidade × mapa com o primeiro atalho destravável (seção 8, item 1); Pernas N1 como terceira aquisição, para provar o gerenciador de partes com uma habilidade de movimento; replay do prólogo pós-créditos, que já tem gatilho (`Save.finished`) mas não tem implementação.
+Ato 1 em construção: beats 1 a 6 jogáveis (ver `docs/ATO1.md`). Próximos: beat 7 (o Detetive), beat 8 (descida ao Ground guiada pelo Dog), beat 9 (Boca N1). O jogo é mais história que desafio — obstáculo só entra quando significa alguma coisa.
 
 Adiado a pedido: passe de arte do prólogo e do Gepeto — é a última cena a ser produzida. **Atenção:** adiar a ARTE é seguro; o que não pode é virar uma cena separada. O prólogo às cegas e o replay revelador têm de continuar sendo a MESMA cena com camadas ligadas/desligadas (GDD 2.2).
