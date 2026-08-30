@@ -62,6 +62,6 @@ Pronto: prólogo às cegas, cérebro, olho, orelha, puzzle do tique-taque, saíd
 
 Ato 1 em construção: beats 1 a 9 jogáveis (ver `docs/ATO1.md`). A avenida tem multidão que entra em pânico, o Dog tem corpo e acompanha em plataforma, e há **bifurcação**: escada de incêndio (Pernas N1) e beco (Boca N1), em qualquer ordem, nenhuma tranca a outra.
 
-Próximos: beat 7 (o Detetive), beat 10 (o Sheriff), beat 11 (descida aos Undergrounds). O jogo é mais história que desafio — obstáculo só entra quando significa alguma coisa.
+**Ato 1 fechado**: prólogo às cegas → cérebro, olho, orelha → saída para a cidade → a rua o chama de monstro → o Dog → bifurcação (Pernas ou Boca, ordem livre) → Detetive → Sheriff → a grade. Próximo é o Ato 2, nos Undergrounds. O jogo é mais história que desafio — obstáculo só entra quando significa alguma coisa.
 
 Adiado a pedido: passe de arte do prólogo e do Gepeto — é a última cena a ser produzida. **Atenção:** adiar a ARTE é seguro; o que não pode é virar uma cena separada. O prólogo às cegas e o replay revelador têm de continuar sendo a MESMA cena com camadas ligadas/desligadas (GDD 2.2).

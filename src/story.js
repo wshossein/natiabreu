@@ -129,6 +129,53 @@ const STORY = [
     ]
   },
 
+  /* ---- O DETETIVE ----
+     GDD 2.1: persegue o jogo todo, depois compreende e vira aliado; e é
+     ele quem revela o twist no fim. Portanto AQUI ele só planta. Cada
+     linha tem de funcionar duas vezes: banal na 1ª jogada, carregada na
+     releitura. Ele diz "o velho" e "não havia corpo" — o jogador ainda
+     não tem como ligar isso ao que ele mesmo fez no escuro. */
+  {
+    id: 'ato1-detetive',
+    at: { x: 5000 },
+    needs: ['eye'],
+    flag: 'st_ato1_detetive',
+    steps: [
+      { wait: 500 },
+      { spawn: { id: 'det', key: 'detetive', x: 5620, y: GROUND_Y - 31 }, ms: 900 },
+      { face: { id: 'det', dir: -1 }, ms: 1600 },
+      { say: { who: 'whoDet', key: 'detSee' }, ms: 2800 },
+      { say: { who: 'whoDet', key: 'detBody' }, ms: 3000 },
+      { think: 'thinkDet', ms: 3800 }
+    ]
+  },
+
+  /* ---- O SHERIFF ----
+     Antagonista de campo. Combate NÃO-LETAL (GDD 5.1): o robô não revida,
+     não pode revidar, e a saída é para baixo. O Sheriff empurra a história
+     na direção dos Undergrounds sem que ninguém precise dizer "vá por ali". */
+  {
+    id: 'ato1-sheriff',
+    at: { x: 5180 },
+    needs: ['eye'],
+    flag: 'st_ato1_sheriff',
+    steps: [
+      /* O bloqueio é o PRIMEIRO passo, não o último: se a rua só fecha ao
+         fim da cena, o jogador corre e ultrapassa o Sheriff enquanto ele
+         ainda está falando — e a cena vira mentira. Fecha primeiro, encena
+         depois. */
+      { block: { x: 5430, w: 26 } },
+      { spawn: { id: 'she', key: 'sheriff', x: 5560, y: GROUND_Y - 30 }, ms: 800 },
+      { face: { id: 'she', dir: -1 }, ms: 600 },
+      { say: { who: 'whoSheriff', key: 'sheStop' }, ms: 2200 },
+      { vib: [200, 80, 200], ms: 300 },
+      { move: { id: 'she', x: 5470, ms: 1300 }, ms: 1000 },
+      { say: { who: 'whoDet', key: 'detWait' }, ms: 2600 },
+      { say: { who: 'whoSheriff', key: 'sheAnswer' }, ms: 2600 },
+      { think: 'thinkFlee', ms: 3800 }
+    ]
+  },
+
   /* ---- AS DUAS ----
      Só dispara para quem voltou e pegou a outra. Recompensa a exploração
      sem exigi-la. */

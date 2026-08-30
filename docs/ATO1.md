@@ -24,15 +24,17 @@ A `flag` vai para o save: beat vivido não repete, nem em outra sessão.
 | 6.5 | **A bifurcação** — dois caminhos saem da avenida | O jogador escolhe. A ordem das partes é dele, não do roteiro (GDD seção 9) | ✅ |
 | 9 | **Boca N1** — corneta de gramofone no fundo do beco | Custo entregue: ele ganha voz e a primeira frase não é a que queria — *"eu não queria ter empurrado"*. Planta o twist sem revelar | ✅ |
 | — | **Pernas N1** — molas na escada de incêndio | Alcança mais alto e cai de mais alto. O custo é literal | ✅ |
-| 7 | **O Detetive** — encontra o laboratório, vê o robô de longe | Planta o perseguidor. Ele PLANTA, nunca revela: a revelação do twist é dele, mas só no fim | ⬜ |
+| 7 | **O Detetive** — encontra o laboratório, vê o robô de longe | Planta o perseguidor. Ele PLANTA, nunca revela: a revelação do twist é dele, mas só no fim | ✅ |
 | 8 | **Fuga para baixo** — descida ao Ground; **o Dog conhece o caminho** | O companheiro guia. O robô não sabe onde está; alguém sabe por ele | ⬜ |
 | 9 | **Boca N1** — ele pode falar | Custo: a primeira coisa que ele consegue dizer não é a que queria. E o que diz passa a poder ser usado contra ele | ⬜ |
-| 10 | **O Sheriff** — antagonista de campo; ameaça o Dog | Planta a perda que virá. Combate não-letal: o robô só se interpõe | ⬜ |
-| 11 | **Undergrounds** — a descida; fim do Ato 1 | De fugitivo a alguém com destino | ⬜ |
+| 10 | **O Sheriff** — encurrala o robô na avenida; o Detetive o contém | Planta a perda que virá. Combate não-letal: o robô não revida, a saída é para baixo | ✅ |
+| 11 | **A grade** — a descida; fim do Ato 1 | De fugitivo a alguém com destino. O Sheriff fecha a rua para leste, a cidade fechou atrás: só resta o buraco | ✅ |
 
 ## Cuidados registrados
 
-**Beat 7 — o Detetive não pode revelar.** Ele é quem junta as peças do twist (GDD 2.2), mas no Ato 1 só persegue. Toda fala dele aqui precisa funcionar duas vezes: inocente na primeira jogada, carregada na releitura.
+**Beat 7 — o Detetive não revela, e as falas dele são de duas camadas.** *"o velho fez mesmo uma coisa dessas"* e *"não havia corpo no laboratório, só ferramenta caída"* são observações banais na primeira jogada. Na releitura, o jogador sabe por que não havia corpo — e sabe que foi ele quem o tirou de lá. O Detetive é o único que não corre do robô, o que já o marca como o futuro aliado.
+
+**Ato 1 fecha, Ato 2 começa lá embaixo.** A grade é o fim do ato, não uma área. Os Undergrounds em si são conteúdo do Ato 2.
 
 **Beat 9 — a Boca, implementada.** A primeira frase que sai dele é *"...eu não queria ter empurrado."* — e ele não decidiu dizê-la. Ninguém no jogo sabe o que ele empurrou; o jogador sabe, porque foi ele quem empurrou no prólogo. A fala é de Gepeto, e nem o robô nem o jogador têm como saber disso ainda. Custo do GDD entregue sem exposição.
 

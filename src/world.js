@@ -8,7 +8,11 @@
    Isso é linguagem, não conforto: o mesmo robô que enche um laboratório
    some numa avenida. */
 const WORLD = {
-  w: 5600,
+  /* Largura com folga além da última cena: a câmera precisa poder centralizar
+     o robô até o fim jogável (~5430). Sem margem ela gruda no limite do mundo,
+     e o robô escorrega para a borda da máscara — que é exatamente o que a
+     centralização existe para impedir. A folga fica na metade cega da tela. */
+  w: 6300,
   h: 900,   // o beco desce abaixo da rua
   spawn: { x: 120, y: GROUND_Y - 40 },
 
@@ -17,15 +21,15 @@ const WORLD = {
     { id: 'duto',    kind: 'interior', x0: 1500, x1: 2620, zoom: 1.45, decor: 'lab'  },
     { id: 'canos',   kind: 'interior', x0: 2620, x1: 3480, zoom: 1.70, decor: 'lab'  },
     { id: 'soleira', kind: 'interior', x0: 3480, x1: 3760, zoom: 1.25, decor: 'lab'  },
-    { id: 'cidade',  kind: 'exterior', x0: 3760, x1: 5800, zoom: 0.92, decor: 'city' }
+    { id: 'cidade',  kind: 'exterior', x0: 3760, x1: 6000, zoom: 0.92, decor: 'city' }
   ],
 
   /* chão: [centro, largura] — os vãos entre faixas são as quedas */
   ground: [
     [850, 1700], [2010, 380], [2975, 1250],
-    [4150, 1200],            // avenida, trecho oeste (3550..4750)
-    [5180, 800],             // avenida, trecho leste (4780..5580)
-    [4680, 420, 820]         // fundo do beco, lá embaixo — [cx, larg, y]
+    [4085, 1070],            // avenida, trecho oeste (3550..4620)
+    [5480, 1320],            // avenida, trecho leste (4820..6140)
+    [4720, 240, 820]         // fundo do beco (4600..4840) — [cx, larg, y]
   ],
 
   platforms: [
@@ -36,13 +40,25 @@ const WORLD = {
        Quem escolhe este caminho primeiro sobe no limite do que consegue. */
     [3900, 420, 90], [4010, 350, 80], [3910, 280, 80], [4020, 210, 80], [3930, 145, 110],
 
-    /* BECO (desce) -> Boca N1. A descida é de graça; a volta é a escalada. */
-    [4830, 560, 90], [4700, 650, 90], [4840, 740, 90]
+    /* BECO (desce) -> Boca N1.
+       Poço de 200px de boca (4620..4820): o robô tem 26px, então cai nele
+       andando, sem precisar mirar. A escada de volta sobe em degraus de 80,
+       75 e 19 — todos abaixo dos 103px que o pulo de lata alcança
+       (v=430, g=900 -> h = 430²/1800). Descer é de graça; subir é o preço. */
+    [4670, 596, 110],        // L3 — pega quem cai da rua (4615..4725)
+    [4800, 660, 90],         // L2 — (4755..4845)
+    [4690, 740, 110],        // L1 — (4635..4745)
+    [4780, 520, 70]          // L4 — último degrau antes da avenida (4745..4815)
   ],
 
   /* paredes e blocos sólidos: [x, y, w, h] */
   walls: [
-    [30, 300, 20, 400]
+    [30, 300, 20, 400],
+    /* Paredes do poço do beco (4620..4820), abaixo do nível da rua.
+       Sem elas o robô saía de lado enquanto caía e despencava no vazio ao
+       lado do piso — o poço tem de ser um poço, não um buraco aberto. */
+    [4610, 690, 20, 340],
+    [4830, 690, 20, 340]
   ],
 
   checkpoints: [
@@ -69,7 +85,7 @@ const WORLD = {
      seção 9 — a ordem é princípio, não contrato). */
   pickups: [
     { part: 'legs',  key: 'pernas', x: 3930, y: 110, needs: ['eye'] },
-    { part: 'mouth', key: 'boca',   x: 4680, y: 786, needs: ['eye'] }
+    { part: 'mouth', key: 'boca',   x: 4710, y: 786, needs: ['eye'] }
   ],
 
   /* cenário. t: rect | circle | tri | img
@@ -118,10 +134,10 @@ const WORLD = {
     /* -- massa de terra sob a cidade --
        Sem isto, a rua parece flutuar sobre o nada agora que o mundo é mais
        alto. O recorte entre as duas peças É a boca do beco. -- */
-    { t: 'rect', x: 2290, y: 706, w: 4600, h: 392, c: 0x121219, d: 0 },
-    { t: 'rect', x: 2290, y: 514, w: 4600, h: 5, c: 0x2c2c36, d: 1 },
-    { t: 'rect', x: 5190, y: 706, w: 830,  h: 392, c: 0x121219, d: 0 },
-    { t: 'rect', x: 5190, y: 514, w: 830, h: 5, c: 0x2c2c36, d: 1 },
+    { t: 'rect', x: 2295, y: 706, w: 4610, h: 392, c: 0x121219, d: 0 },
+    { t: 'rect', x: 2295, y: 514, w: 4610, h: 5, c: 0x2c2c36, d: 1 },
+    { t: 'rect', x: 5495, y: 706, w: 1330, h: 392, c: 0x121219, d: 0 },
+    { t: 'rect', x: 5495, y: 514, w: 1330, h: 5, c: 0x2c2c36, d: 1 },
 
     /* -- escada de incêndio: a estrutura encostada no prédio -- */
     { t: 'rect', x: 3965, y: 300, w: 8, h: 380, c: 0x1a1a22, d: 1 },
@@ -129,17 +145,18 @@ const WORLD = {
     { t: 'rect', x: 3912, y: 100, w: 150, h: 10, c: 0x22222c, d: 1 },
 
     /* -- beco: paredes que apertam, e o único ponto de luz lá no fundo -- */
-    { t: 'rect', x: 4762, y: 690, w: 26, h: 400, c: 0x101016, d: 1 },
-    { t: 'rect', x: 4600, y: 690, w: 26, h: 400, c: 0x101016, d: 1 },
-    { t: 'rect', x: 4680, y: 620, w: 6, h: 60, c: 0x1e1e26, d: 2 },
-    { t: 'circle', x: 4680, y: 588, r: 8, c: 0x3f3a2c, d: 2 },
-    { t: 'rect', x: 4740, y: 800, w: 40, h: 34, c: 0x191920, d: 3 },     // entulho
-    { t: 'rect', x: 4620, y: 806, w: 30, h: 24, c: 0x191920, d: 3 }
+    { t: 'rect', x: 4610, y: 660, w: 24, h: 380, c: 0x101016, d: 1 },   // parede oeste do poço
+    { t: 'rect', x: 4830, y: 660, w: 24, h: 380, c: 0x101016, d: 1 },   // parede leste
+    { t: 'rect', x: 4632, y: 700, w: 5, h: 46, c: 0x1e1e26, d: 2 },     // luminária do beco
+    { t: 'circle', x: 4632, y: 676, r: 7, c: 0x3f3a2c, d: 2 },
+    { t: 'rect', x: 4790, y: 802, w: 44, h: 30, c: 0x191920, d: 3 },    // entulho no fundo
+    { t: 'rect', x: 4640, y: 808, w: 32, h: 18, c: 0x191920, d: 3 }
   ],
 
   /* imagens de cenário: as que colidem entram em `solid` */
   images: [
-    { key: 'crate', x: 1600, y: GROUND_Y - 25, d: 3, solid: true }
+    { key: 'crate', x: 1600, y: GROUND_Y - 25, d: 3, solid: true },
+    { key: 'grade', x: 5392, y: GROUND_Y - 4, d: 4 }        // descida aos Undergrounds
     /* Nada de sólido no nível do chão da avenida: a primeira saída para a
        cidade é cena, não obstáculo. Um caixote no caminho vira parede — o
        robô pula, mas parar a caminhada aqui atropela o beat. */
@@ -151,7 +168,7 @@ const WORLD = {
   pipes: [2750, 2950, 3150],
 
   /* fim do slice: o robô alcança a avenida */
-  finishX: 5520
+  finishX: 5376   // a grade: fim do Ato 1
 };
 
 /* Zona que contém x. Fora de tudo -> a última (a cidade segue). */

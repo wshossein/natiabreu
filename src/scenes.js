@@ -170,6 +170,51 @@ class GameScene extends Phaser.Scene {
       line(g, 0.55); g.lineBetween(14.5, 18, 14.5, 42);                   // fecho do sobretudo
     });
 
+    mk('detetive', 30, 62, g => {                                        // o Detetive: observa, não corre
+      g.fillStyle(DARK_N, 1);
+      g.fillRoundedRect(7, 18, 16, 32, { tl: 4, tr: 4, bl: 1, br: 1 });   // sobretudo comprido
+      g.fillRect(9.5, 49, 4.5, 13); g.fillRect(16, 49, 4.5, 13);
+      g.fillStyle(FILL_N, 1); g.fillCircle(15, 10.5, 6);
+      g.fillStyle(DARK_N, 1);
+      g.fillRect(7.5, 6, 15, 2.6); g.fillRect(10.5, 1.5, 9, 5);           // chapéu de aba
+      hatch(g, 15, 21, 8, 27, 2.3);
+      line(g, 0.9);
+      g.strokeCircle(15, 10.5, 6);
+      g.strokeRoundedRect(7, 18, 16, 32, { tl: 4, tr: 4, bl: 1, br: 1 });
+      g.strokeRect(9.5, 49, 4.5, 13); g.strokeRect(16, 49, 4.5, 13);
+      g.strokeRect(7.5, 6, 15, 2.6); g.strokeRect(10.5, 1.5, 9, 5);
+      line(g, 0.55);
+      g.lineBetween(15, 19, 15, 48);
+      g.lineBetween(23, 27, 27, 34);                                     // braço do lampião
+      g.fillStyle(0x3f3a2c, 1); g.fillCircle(27, 37.5, 3.6);
+      line(g, 0.6); g.strokeCircle(27, 37.5, 3.6);
+    });
+
+    mk('sheriff', 32, 60, g => {                                         // o Sheriff: corpo de campo, cassetete
+      g.fillStyle(DARK_N, 1);
+      g.fillRoundedRect(6, 17, 20, 28, { tl: 5, tr: 5, bl: 1, br: 1 });   // tronco largo
+      g.fillRect(9, 44, 5.5, 16); g.fillRect(17.5, 44, 5.5, 16);
+      g.fillStyle(FILL_N, 1); g.fillCircle(16, 10, 6.2);
+      g.fillStyle(DARK_N, 1);
+      g.fillRect(7.5, 5.5, 17, 2.8); g.fillRect(11, 1, 10, 5);
+      hatch(g, 17, 20, 8, 23, 2.2);
+      line(g, 1);
+      g.strokeCircle(16, 10, 6.2);
+      g.strokeRoundedRect(6, 17, 20, 28, { tl: 5, tr: 5, bl: 1, br: 1 });
+      g.strokeRect(9, 44, 5.5, 16); g.strokeRect(17.5, 44, 5.5, 16);
+      g.strokeRect(7.5, 5.5, 17, 2.8); g.strokeRect(11, 1, 10, 5);
+      line(g, 0.7);
+      g.lineBetween(26, 24, 30, 42);                                     // cassetete na mão
+      g.fillStyle(LINE_N, .9); g.fillCircle(11.5, 23, 1.1);              // distintivo
+    });
+
+    mk('grade', 40, 14, g => {                                           // a descida para os Undergrounds
+      g.fillStyle(0x07070a, 1); g.fillRect(2, 3, 36, 11);
+      line(g, 0.9); g.strokeRect(2, 3, 36, 11);
+      line(g, 0.6);
+      for (let x = 7; x < 38; x += 5) g.lineBetween(x, 3, x, 14);
+    });
+
     mk('crianca', 20, 36, g => {                                         // criança: a rua tem quem ainda não aprendeu a temer
       g.fillStyle(DARK_N, 1);
       g.fillRoundedRect(5, 13, 10, 15, { tl: 3, tr: 3, bl: 1, br: 1 });
@@ -354,7 +399,10 @@ class GameScene extends Phaser.Scene {
     };
     WORLD.ground.forEach(([cx, w, y]) => {
       const top = y === undefined ? GROUND_Y : y;    // 3º valor = piso em outra altura
-      solid(cx, top + 30, w, 60);
+      /* Laje fina de propósito: com 60px de espessura, uma plataforma logo
+         abaixo da rua fazia a cabeça do robô entrar na lateral da laje e ele
+         encravava sem conseguir andar. Chão é superfície, não bloco. */
+      solid(cx, top + 20, w, 40);
       this.add.rectangle(cx, top + 3, w, 6, 0x33333c).setDepth(2);        // acabamento
     });
     WORLD.walls.forEach(([x, y, w, h]) => solid(x, y, w, h));
@@ -440,7 +488,11 @@ class GameScene extends Phaser.Scene {
     this.cam.setZoom(this.zone.zoom);
     this.cam.startFollow(this.robot, true, 0.15, 0.10);
     this.cam.setFollowOffset(this.camLead(this.zone.zoom), 0);
-    this.cam.setDeadzone(40, 190);                        // vertical calmo: não balança no pulo
+    /* Zero na horizontal: o robô tem de ficar CRAVADO no centro. Com folga,
+       ele encosta na borda da máscara ao ser encurralado contra uma parede
+       e o corpo entra na metade cega. Vertical generoso, para não balançar
+       no pulo. */
+    this.cam.setDeadzone(0, 190);
 
     this.uiCam = this.cameras.add(0, 0, W, H);
     this.uiCam.setName('ui');
@@ -715,6 +767,16 @@ class GameScene extends Phaser.Scene {
         this.tweens.add({ targets: o, alpha: 0, duration: 400, onComplete: () => o.destroy() });
         delete this.npc[s.exit.id];
       }
+    } else if (s.block) {
+      /* Bloqueio invisível: quando a história diz que não dá para passar,
+         não pode dar para passar. NPC não colide, então o funil precisa de
+         um corpo de verdade — senão o jogador atravessa o Sheriff e a cena
+         vira mentira. */
+      const w = this.add.rectangle(s.block.x, GROUND_Y - 40, s.block.w || 26, 90, 0x000000, 0);
+      this.physics.add.existing(w, true);
+      this.solids.push(w);
+      this.physics.add.collider(this.robot, w);
+      this.world(w);
     } else if (s.panic) {
       this.panicCrowd();
     } else if (s.follow) {
@@ -782,6 +844,9 @@ class GameScene extends Phaser.Scene {
      A avenida precisa estar VIVA antes do grito, senão a fuga não custa
      nada: só se perde uma rua cheia. */
   buildCrowd() {
+    /* A rua já esvaziou nesta partida: continuar de um save posterior ao
+       grito não pode repovoar a avenida — seria desfazer a cena. */
+    if (Save.flag('st_cidade_monstro')) { this.crowd = []; return; }
     this.crowd = (WORLD.crowd || []).map(c => {
       const o = this.world(this.add.image(c.x, GROUND_Y - (c.key === 'crianca' ? 18 : 28), c.key)
         .setDepth(c.d || 7).setScale(AS * (c.s || 1)));
@@ -1072,7 +1137,10 @@ class GameScene extends Phaser.Scene {
     }
 
     // fim
-    if (this.doorOpen && r.x > WORLD.finishX) this.endGame();
+    /* Fim do Ato 1 na grade. Só depois da cena do Sheriff (é ela que empurra
+       o robô para baixo) e nunca no meio de um beat, senão o ato termina por
+       cima de uma fala. */
+    if (Save.flag('st_ato1_sheriff') && !this.beatBusy && r.x > WORLD.finishX) this.endGame();
 
     // interação contextual (espaço/E, marcador no mundo, botão touch)
     let found = null;

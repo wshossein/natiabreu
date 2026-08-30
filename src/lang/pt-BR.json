@@ -25,8 +25,8 @@
   "pipeWrong": "nada.",
   "pipeRight": "clique. a porta destravou.",
   "remade": "remontado.",
-  "endT": "FIM DO PROTÓTIPO",
-  "endB": "cérebro, olho, orelha — e alguém que ficou. faltam vinte e três partes e uma cidade inteira.",
+  "endT": "FIM DO ATO 1",
+  "endB": "cérebro, olho, orelha — e o que você escolheu pegar. lá embaixo a cidade não tem lei nem sol.",
   "again": "recomeçar",
   "pause": "PAUSA",
   "resume": "continuar",
@@ -52,5 +52,14 @@
   "legsDesc": "molas. o chão fica mais longe.",
   "thinkLegs1": "as juntas cederam.\nnão quebraram — cederam.",
   "thinkLegs2": "posso alcançar mais alto.\ne cair de mais alto.",
-  "thinkBoth": "molas e uma corneta.\nestou juntando um corpo com o que a cidade jogou fora."
+  "thinkBoth": "molas e uma corneta.\nestou juntando um corpo com o que a cidade jogou fora.",
+  "whoDet": "DETETIVE",
+  "whoSheriff": "SHERIFF",
+  "detSee": "então era verdade. o velho fez mesmo uma coisa dessas.",
+  "detBody": "e não havia corpo no laboratório. só ferramenta caída.",
+  "thinkDet": "ele não corre.\né o primeiro que não corre de mim.",
+  "sheStop": "PARADO AÍ, LATA.",
+  "detWait": "espera. ele não fez nada ainda.",
+  "sheAnswer": "AINDA. tira essa coisa da minha rua.",
+  "thinkFlee": "não dá para passar por ele.\ne atrás só tem a rua que me expulsou.\nresta o buraco."
 }

@@ -25,8 +25,8 @@
   "pipeWrong": "nothing.",
   "pipeRight": "click. the door unlocked.",
   "remade": "reassembled.",
-  "endT": "END OF PROTOTYPE",
-  "endB": "brain, eye, ear — and someone who stayed. twenty-three parts to go, and a whole city.",
+  "endT": "END OF ACT 1",
+  "endB": "brain, eye, ear — and whatever you chose to take. down there the city has no law and no sun.",
   "again": "restart",
   "pause": "PAUSED",
   "resume": "resume",
@@ -52,5 +52,14 @@
   "legsDesc": "springs. the ground is further away.",
   "thinkLegs1": "the joints gave.\nnot broke — gave.",
   "thinkLegs2": "I can reach higher.\nand fall from higher.",
-  "thinkBoth": "springs and a horn.\nI am assembling a body out of what the city threw away."
+  "thinkBoth": "springs and a horn.\nI am assembling a body out of what the city threw away.",
+  "whoDet": "DETECTIVE",
+  "whoSheriff": "SHERIFF",
+  "detSee": "so it was true. the old man really built one of these.",
+  "detBody": "and there was no body in that lab. only a dropped tool.",
+  "thinkDet": "he doesn't run.\nhe's the first one who doesn't run from me.",
+  "sheStop": "HOLD IT, TIN.",
+  "detWait": "wait. he hasn't done anything yet.",
+  "sheAnswer": "YET. get that thing off my street.",
+  "thinkFlee": "I can't get past him.\nand behind me is only the street that threw me out.\nthere's the hole."
 }
