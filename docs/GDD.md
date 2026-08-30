@@ -25,7 +25,8 @@ Metroidvania 2D mobile sobre um robô de lata que se torna humano, parte por par
 | **Frankenstein** | A criatura chamada de "monstro", rejeição social, criador destruído pela criação |
 | **Homem de Lata (Oz)** | "Agora sei que tenho um coração, pois ele está quebrado" |
 | **Asimov (3 Leis)** | Limite moral programado — e o custo de quebrá-lo |
-| **Machinarium** | Direção de arte do robô |
+| **Moebius (Jean Giraud)** | Direção de arte: *ligne claire* — contorno de nanquim fino e uniforme, chapados planos, hachura escassa, precisão de prancha técnica. É o acabamento. |
+| **Machinarium** | Proporção e humor do robô: cabeçudo, atarracado, rebites, membros retos. É a silhueta, não o acabamento. |
 | **Hollow Knight** | Estrutura de mapa e level design |
 
 **Arco:** Gepeto cria o Robô → acidente/morte de Gepeto e fuga → perseguição (Detetive, Sheriff, Prefeito que quer o robô para ter vida eterna) → Undergrounds e pacto com Rei do Crime → aliados (Bom Ladrão, Líder Sindical, Padre, Parceir@, Dog) → morte do Dog e do Sheriff, depressão ("agora sei que tenho um coração, pois ele está quebrado") → greve, queda do Prefeito → Robô livre, ganha nome e RG → epílogo: filho, e morte (JFK) — o preço final de ser humano é ser mortal.
@@ -179,12 +180,22 @@ Foco em exploração, plataforma e puzzles (Machinarium/Inside). Regra absoluta:
 - **Com o Coração:** a morte definitiva passa a existir — e o robô *descobre isso na narrativa exatamente quando o jogador o sente na mecânica*. Luto mecânico: após perdas da história (Dog), atributos temporariamente reduzidos, tela dessaturada.
 - Dificuldade crescente vem da fragilidade, não de inimigos mais fortes.
 
-## 6. Arte e animação
+## 6. Arte e animação ✔ DECIDIDO — nanquim (Moebius)
 
-- Ref. visual: robô do Machinarium — cartoon, fofo, rebites, membros retos.
-- **Rigidez como linguagem:** início = animação "stop motion" com poucos frames, movimentos duros de lata; a cada parte orgânica, frames extras e curvas suaves (easing). A física também evolui: pulo duro → pulo com antecipação e squash & stretch.
-- Paleta acompanha o olho: P&B → cor → backgrounds ricos. Isso ECONOMIZA arte no início do desenvolvimento (bônus de produção).
-- Pipeline sugerido: sprites desenhados (Aseprite ou Krita) + animação esquelética leve (Spine/DragonBones export para Phaser) para a fase "suave".
+**Referência de acabamento: Moebius.** *Ligne claire*: contorno de nanquim fino e de espessura constante, chapados planos sem degradê, hachura usada com parcimônia (só onde precisa de volume), precisão de prancha técnica e muito espaço negativo. A silhueta do robô continua vindo do Machinarium — cabeçudo, atarracado, rebites, membros retos —, mas o acabamento é de linha, não de pintura.
+
+**Anatomia canônica do robô (da folha de referência, `docs/arte/referencias/`):** domo, mandíbula sólida (não abre — ele não fala na era lata), peito fechado (não há coração ainda), extremidades dos braços bloqueadas (não há mãos), pés bloqueados. **O design da era lata é a lista do que ainda falta:** cada parte adquirida abre literalmente uma parte que hoje está lacrada. Isso é regra de arte, não enfeite — nenhum sprite da era lata pode ter mão, boca funcional ou peito aberto.
+
+**Inversão do nanquim.** O mundo é escuro (era lata + olho N1 = P&B), então a ligne claire aparece invertida: **traço claro e uniforme sobre chapados escuros**, em vez de nanquim preto sobre papel. Mantém a leitura de desenho a traço e preserva o âmbar (`#d9a441`) como único acento, reservado à interação e à aquisição de partes.
+
+**Consequência de produção (o motivo de valer a pena):** arte de linha é paramétrica. As 4 constantes em `src/const.js` (`LINE_N`, `FILL_N`, `DARK_N`, `HATCH_N`) definem todo o acabamento — inverter para nanquim escuro sobre papel envelhecido é trocar 4 valores, não redesenhar. A progressão de paleta do GDD (P&B → cor → backgrounds ricos) fica sendo troca de constantes e adição de camadas, não repintura.
+
+**Resolução.** As texturas são desenhadas em coordenadas lógicas com o canvas escalado `ART`× (hoje 4) e reduzidas a `AS` na tela. Traço fino e antialiasado em vez de pixel art — é isso que faz a linha sobreviver no tamanho de sprite.
+
+- **Rigidez como linguagem:** início = animação "stop motion" com poucos frames, movimentos duros de lata (quantizador `q()`); a cada parte orgânica, frames extras e curvas suaves (easing). A física também evolui: pulo duro → pulo com antecipação e squash & stretch.
+- **Paleta acompanha o olho:** P&B → cor → backgrounds ricos. Isso ECONOMIZA arte no início do desenvolvimento (bônus de produção).
+- **Hachura é orçamento de atenção:** quanto mais hachura, mais o olho vai ali. Usar para marcar o que é interativo/importante, nunca como preenchimento decorativo.
+- Pipeline: hoje a arte é **procedural** (desenhada por código em `makeTextures`), o que mantém o jogo sem dependência de assets e permite iterar estilo trocando constantes. Assets desenhados entram quando a silhueta estiver validada em playtest — especificação e prompts em [`docs/arte/ASSETS.md`](arte/ASSETS.md).
 
 ## 7. Tecnologia (decidido na conversa anterior)
 
@@ -217,7 +228,8 @@ A ordem do PDF é referência, não contrato. Princípio norteador: **a históri
 1. Título do jogo — decisão deliberadamente adiada para o fim.
 2. Validar a proposta de memória por fragmentos sensoriais anônimos (seção 2.2c) — ou adotar amnésia total pura.
 3. Papel do filho morto de Gepeto no twist (o Robô foi construído à imagem dele? alimenta o decoy da seção 2.2c).
-4. Passe de consistência na timeline: com Gepeto morto no prólogo, revisar cada cartão que o cita ("Detetive investiga Gepeto" vira investigação póstuma; o que a cidade achou no laboratório — corpo sem cérebro → manchete do "monstro"). Trabalho de escrita, não de decisão.
+4. **Fundo escuro ou papel envelhecido?** A referência de arte está sobre papel creme (nanquim escuro sobre claro); o jogo hoje é o inverso (traço claro sobre `#0a0a0c`). O escuro casa com a Metropolis expressionista e com o prólogo às cegas; o papel casa mais literalmente com Moebius e com a leitura de "prancha técnica". Decisão barata de reverter enquanto a arte for procedural — são 4 constantes. Recomendação: manter escuro no Ato 1 e testar o papel como identidade do Ato 3 (humanização = mundo que clareia).
+5. Passe de consistência na timeline: com Gepeto morto no prólogo, revisar cada cartão que o cita ("Detetive investiga Gepeto" vira investigação póstuma; o que a cidade achou no laboratório — corpo sem cérebro → manchete do "monstro"). Trabalho de escrita, não de decisão.
 
 ## Decisões já tomadas
 

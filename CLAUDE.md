@@ -24,11 +24,14 @@ O prólogo às cegas é UMA cena completa (Gepeto existe, a morte acontece), ape
 - `src/scenes.js` — TitleScene + GameScene (prólogo → olho → orelha → puzzle sonoro)
 - `src/main.js` — boot (espera fontes + i18n)
 - `docs/GDD.md` — game design document, fonte da verdade
+- `docs/arte/` — direção de arte: `ASSETS.md` (o que falta desenhar + prompts) e `referencias/` (folhas canônicas)
 
 ## Convenções
 
 - NENHUM texto hardcoded em cena: sempre `T('chave')` + entrada nos dois JSONs de idioma.
 - Paleta: mundo em cinzas (olho N1 é P&B por design); único acento `AMBER` (#d9a441) para interação. Cor plena só existirá com o Olho N2.
+- Arte é **nanquim (ligne claire, ref. Moebius)**, hoje procedural em `makeTextures()`: contorno claro de espessura uniforme, chapados planos, hachura escassa. Texturas desenhadas em `ART`× e exibidas em `AS` — sempre aplicar `.setScale(AS)` em sprite novo. Acabamento inteiro sai de 4 constantes em `const.js`.
+- Regra dura da era lata: **nenhum sprite pode ter mão, boca que abre ou peito aberto.** O que está lacrado é a lista de partes que o jogador ainda vai conquistar (GDD seção 6).
 - Vibração (`vib`) é canal de gameplay (tato), não enfeite — mantê-la coerente.
 - Controles: ◀▶ mover, ▲/W pular (pulo baixo — pernas de lata), espaço/E interagir. Touch: botões na tela, interação só aparece em contexto.
 - Sem dependências novas sem necessidade real; o jogo deve rodar abrindo `index.html` num servidor estático.

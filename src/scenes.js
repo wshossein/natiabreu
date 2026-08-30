@@ -28,75 +28,170 @@ class GameScene extends Phaser.Scene {
   constructor() { super('game'); }
 
   /* --- texturas geradas (cinza por design: era P&B) --- */
+  /* ---------- texturas: nanquim (ref. Moebius) ----------
+     Tudo é desenhado em coordenadas lógicas com o canvas escalado ART×, e as
+     imagens voltam a AS na tela: o traço sai fino, uniforme e antialiasado —
+     ligne claire, não pixel art. Chapados planos, hachura só onde precisa de
+     volume. A silhueta segue a folha de referência: domo, mandíbula sólida,
+     peito fechado, extremidades bloqueadas. */
   makeTextures() {
     if (this.textures.exists('r_torso')) return;
+
     const mk = (key, w, h, draw) => {
       const g = this.make.graphics({ x: 0, y: 0, add: false });
-      draw(g); g.generateTexture(key, w, h); g.destroy();
+      g.scaleCanvas(ART, ART);
+      draw(g);
+      g.generateTexture(key, w * ART, h * ART);
+      g.destroy();
     };
-    // -- robô segmentado --
+    const line = (g, wgt) => g.lineStyle(wgt === undefined ? 0.9 : wgt, LINE_N, 1);
+    /* hachura diagonal recortada num retângulo — volume sem pintar */
+    const hatch = (g, x, y, w, h, step) => {
+      g.lineStyle(0.5, HATCH_N, .5);
+      for (let d = step; d < w + h; d += step) {
+        g.lineBetween(x + Math.max(0, d - h), y + Math.min(d, h),
+                      x + Math.min(d, w),     y + Math.max(0, d - w));
+      }
+    };
+
+    /* -- robô: peças separadas, montadas no container -- */
     const headDraw = (g, eye) => {
-      g.fillStyle(0xb0b0b8); g.fillCircle(12, 13, 10);
-      g.fillStyle(0x8d8d95); g.fillRect(2, 13, 20, 4);           // costura da "panela"
-      g.fillStyle(0x62626a); g.fillRect(10, 0, 4, 6);            // funil
-      g.fillStyle(0x1a1a1e); g.fillCircle(8, 11, 3); g.fillCircle(17, 11, 2); // órbitas vazias
-      if (eye) { g.fillStyle(AMBER_N); g.fillCircle(8, 11, 2); }
-      g.fillStyle(0x55555c); g.fillCircle(3, 14, 1); g.fillCircle(21, 14, 1); // rebites
+      g.fillStyle(FILL_N, 1);
+      g.fillRoundedRect(3, 2, 18, 16, { tl: 8, tr: 8, bl: 3, br: 3 });   // domo
+      g.fillStyle(DARK_N, 1);
+      g.fillRoundedRect(6, 15.5, 12, 5, { tl: 0, tr: 0, bl: 2, br: 2 }); // mandíbula sólida
+      hatch(g, 14.5, 6, 5.5, 9, 2);
+      line(g, 0.9);
+      g.strokeRoundedRect(3, 2, 18, 16, { tl: 8, tr: 8, bl: 3, br: 3 });
+      g.strokeRoundedRect(6, 15.5, 12, 5, { tl: 0, tr: 0, bl: 2, br: 2 });
+      line(g, 0.6);
+      g.lineBetween(4.5, 15.5, 19.5, 15.5);                              // costura do queixo
+      g.fillStyle(DARK_N, 1);                                            // órbitas
+      g.fillCircle(8.5, 10.5, 3.3); g.fillCircle(15.8, 10.5, 3.3);
+      line(g, 0.8);
+      g.strokeCircle(8.5, 10.5, 3.3); g.strokeCircle(15.8, 10.5, 3.3);
+      if (eye) { g.fillStyle(AMBER_N, 1); g.fillCircle(8.5, 10.5, 2); }  // só o olho adquirido
+      g.fillStyle(LINE_N, .75); g.fillCircle(4.6, 13.5, .6); g.fillCircle(19.4, 13.5, .6);
     };
     mk('r_head', 24, 24, g => headDraw(g, false));
     mk('r_head_eye', 24, 24, g => headDraw(g, true));
+
     mk('r_torso', 24, 22, g => {
-      g.fillStyle(0x9a9aa2); g.fillRect(2, 0, 20, 20);
-      g.fillStyle(0x7c7c84); g.fillRect(2, 6, 20, 2); g.fillRect(2, 13, 20, 2); // anéis de lata
-      g.fillStyle(0x55555c); [5, 12, 19].forEach(x => g.fillCircle(x, 3, 1.2));
+      g.fillStyle(DARK_N, 1);
+      g.fillRoundedRect(0, 2, 6.5, 6, 2); g.fillRoundedRect(17.5, 2, 6.5, 6, 2);  // ombreiras
+      g.fillStyle(FILL_N, 1);
+      g.fillRoundedRect(4, 1, 16, 14, { tl: 4, tr: 4, bl: 2, br: 2 });            // peito fechado
+      g.fillStyle(DARK_N, 1); g.fillRect(4, 15, 16, 5);                           // cintura
+      hatch(g, 13, 4, 6, 10, 2);
+      line(g, 0.9);
+      g.strokeRoundedRect(0, 2, 6.5, 6, 2); g.strokeRoundedRect(17.5, 2, 6.5, 6, 2);
+      g.strokeRoundedRect(4, 1, 16, 14, { tl: 4, tr: 4, bl: 2, br: 2 });
+      g.strokeRect(4, 15, 16, 5);
+      line(g, 0.55);
+      g.lineBetween(12, 2.5, 12, 14);                                             // costura central
+      g.fillStyle(FILL_N, 1); g.fillRect(10, 16, 4, 3);                           // fivela
+      line(g, 0.55); g.strokeRect(10, 16, 4, 3);
+      g.fillStyle(LINE_N, .7); [7.5, 16.5].forEach(x => g.fillCircle(x, 4, .6));
     });
+
     mk('r_arm', 8, 18, g => {
-      g.fillStyle(0x84848c); g.fillRect(2, 0, 4, 16);
-      g.fillStyle(0x9a9aa2); g.fillCircle(4, 1, 3);              // ombro
-      g.fillCircle(4, 16, 2.5);                                   // mão-pinça
+      g.fillStyle(FILL_N, 1);
+      g.fillCircle(4, 2.6, 2.6);                                   // ombro
+      g.fillRoundedRect(2.4, 2.4, 3.2, 6.6, 1.4);                  // braço
+      g.fillStyle(DARK_N, 1);
+      g.fillRoundedRect(1.5, 8.4, 5, 8.2, 2);                      // extremidade bloqueada
+      hatch(g, 4.2, 9, 2.2, 7, 1.6);
+      line(g, 0.8);
+      g.strokeCircle(4, 2.6, 2.6);
+      g.strokeRoundedRect(2.4, 2.4, 3.2, 6.6, 1.4);
+      g.strokeRoundedRect(1.5, 8.4, 5, 8.2, 2);
+      line(g, 0.5); g.lineBetween(1.9, 11.6, 6.1, 11.6);           // anel do antebraço
     });
+
     mk('r_leg', 9, 17, g => {
-      g.fillStyle(0x7c7c84); g.fillRect(2, 0, 4, 13);
-      g.fillStyle(0x62626a); g.fillRect(0, 13, 9, 4);            // pé
+      g.fillStyle(FILL_N, 1);
+      g.fillRoundedRect(2.3, 0, 4.4, 7, 1.4);                      // coxa
+      g.fillStyle(DARK_N, 1);
+      g.fillCircle(4.5, 7.4, 2.1);                                 // joelho
+      g.fillRoundedRect(2.6, 7.6, 3.8, 5.2, 1.2);                  // canela
+      g.fillRoundedRect(0.5, 12.4, 8, 4.2, { tl: 1.6, tr: 1.6, bl: 1, br: 1 });  // pé bloqueado
+      hatch(g, 4.6, 1, 2, 6, 1.8);
+      line(g, 0.8);
+      g.strokeRoundedRect(2.3, 0, 4.4, 7, 1.4);
+      g.strokeCircle(4.5, 7.4, 2.1);
+      g.strokeRoundedRect(2.6, 7.6, 3.8, 5.2, 1.2);
+      g.strokeRoundedRect(0.5, 12.4, 8, 4.2, { tl: 1.6, tr: 1.6, bl: 1, br: 1 });
     });
-    // -- cenário --
+
+    /* -- cenário -- */
     mk('gepeto', 34, 58, g => {
-      g.fillStyle(0x4a4a52); g.fillRect(8, 20, 18, 26);
-      g.fillStyle(0x3a3a42); g.fillRect(10, 46, 5, 12); g.fillRect(19, 46, 5, 12);
-      g.fillStyle(0x8a8a92); g.fillCircle(17, 11, 8);
-      g.fillStyle(0xcacace); g.fillRect(9, 14, 16, 4);
+      g.fillStyle(DARK_N, 1);
+      g.fillRoundedRect(8, 19, 18, 27, { tl: 5, tr: 5, bl: 1, br: 1 });  // casaco
+      g.fillRect(10.5, 45, 5, 13); g.fillRect(18.5, 45, 5, 13);          // pernas
+      g.fillStyle(FILL_N, 1); g.fillCircle(17, 11, 7.4);                 // cabeça
+      hatch(g, 18, 22, 7.5, 21, 2.2);
+      line(g, 0.9);
+      g.strokeCircle(17, 11, 7.4);
+      g.strokeRoundedRect(8, 19, 18, 27, { tl: 5, tr: 5, bl: 1, br: 1 });
+      g.strokeRect(10.5, 45, 5, 13); g.strokeRect(18.5, 45, 5, 13);
+      line(g, 0.6);
+      g.lineBetween(10, 15.5, 24, 15.5);                                 // gola
+      g.lineBetween(17, 20, 17, 44);                                     // fecho do casaco
     });
-    mk('ear', 26, 26, g => {
-      g.lineStyle(3, AMBER_N); g.strokeCircle(13, 13, 9); g.strokeCircle(13, 13, 4);
+
+    mk('ear', 26, 26, g => {                                             // item: âmbar = aquisição
+      g.lineStyle(1.4, AMBER_N, 1); g.strokeCircle(13, 13, 9);
+      g.lineStyle(1.0, AMBER_N, 1); g.strokeCircle(13, 13, 5);
+      g.lineStyle(0.8, AMBER_N, .8); g.strokeCircle(13, 13, 2);
     });
-    mk('mark', 16, 16, g => {                                     // marcador de interação
-      g.fillStyle(AMBER_N);
-      g.fillTriangle(8, 16, 0, 6, 16, 6); g.fillRect(6, 0, 4, 4);
+
+    mk('mark', 16, 16, g => {                                            // marcador de interação
+      g.fillStyle(AMBER_N, 1);
+      g.fillTriangle(8, 16, 1, 6, 15, 6); g.fillRect(6, 0, 4, 4.5);
     });
+
     mk('door', 22, 122, g => {
-      g.fillStyle(0x44444e); g.fillRect(0, 0, 22, 122);
-      g.fillStyle(0x33333c); g.fillRect(3, 6, 16, 34); g.fillRect(3, 46, 16, 34); g.fillRect(3, 86, 16, 30);
-      g.fillStyle(0x5a5a64); [10, 60, 112].forEach(y => g.fillCircle(11, y, 1.5));
+      g.fillStyle(DARK_N, 1); g.fillRect(0, 0, 22, 122);
+      hatch(g, 2, 4, 18, 114, 5);
+      line(g, 0.9); g.strokeRect(0.5, 0.5, 21, 121);
+      line(g, 0.55);
+      g.strokeRect(3, 6, 16, 34); g.strokeRect(3, 46, 16, 34); g.strokeRect(3, 86, 16, 30);
+      g.fillStyle(LINE_N, .8); [10, 60, 112].forEach(y => g.fillCircle(11, y, .8));
     });
+
     mk('pipe', 44, 150, g => {
-      g.fillStyle(0x33333d); g.fillRect(9, 0, 26, 150);
-      g.fillStyle(0x44444e); g.fillRect(0, 0, 44, 10); g.fillRect(0, 70, 44, 8); g.fillRect(0, 140, 44, 10);
-      g.fillStyle(0x1f1f26); g.fillRect(13, 12, 3, 126);          // sombra do cilindro
-      g.fillStyle(0x5a5a64); [5, 74, 145].forEach(y => { g.fillCircle(4, y, 2); g.fillCircle(40, y, 2); });
+      g.fillStyle(DARK_N, 1); g.fillRect(9, 0, 26, 150);
+      hatch(g, 24, 2, 10, 146, 4);
+      line(g, 0.9); g.strokeRect(9, 0, 26, 150);
+      line(g, 0.5); g.lineBetween(14.5, 12, 14.5, 138);                  // brilho do cilindro
+      [[0, 10], [70, 8], [140, 10]].forEach(([y, hh]) => {               // flanges
+        g.fillStyle(FILL_N, 1); g.fillRect(0, y, 44, hh);
+        line(g, 0.9); g.strokeRect(0, y, 44, hh);
+      });
+      g.fillStyle(LINE_N, .7);
+      [5, 74, 145].forEach(y => { g.fillCircle(3.5, y, 1); g.fillCircle(40.5, y, 1); });
     });
+
     mk('crate', 60, 50, g => {
-      g.fillStyle(0x30303a); g.fillRect(0, 0, 60, 50);
-      g.lineStyle(3, 0x22222a); g.strokeRect(1, 1, 58, 48);
-      g.lineBetween(0, 0, 60, 50); g.lineBetween(60, 0, 0, 50);   // travessas
+      g.fillStyle(DARK_N, 1); g.fillRect(0, 0, 60, 50);
+      hatch(g, 3, 3, 54, 44, 6);
+      line(g, 1); g.strokeRect(0.5, 0.5, 59, 49);
+      line(g, 0.7);
+      g.lineBetween(0.5, 0.5, 59.5, 49.5); g.lineBetween(59.5, 0.5, 0.5, 49.5);
+      g.strokeRect(3, 3, 54, 44);
     });
-    mk('gear', 80, 80, g => {
-      g.fillStyle(0x16161c);
+
+    mk('gear', 80, 80, g => {                                            // fundo: quase silhueta
+      g.fillStyle(0x15151b, 1);
       for (let i = 0; i < 8; i++) {
         const a = i * Math.PI / 4;
         g.fillRect(40 + Math.cos(a) * 34 - 5, 40 + Math.sin(a) * 34 - 5, 10, 10);
       }
       g.fillCircle(40, 40, 32);
-      g.fillStyle(0x0e0e12); g.fillCircle(40, 40, 10);
+      g.lineStyle(0.8, 0x30303a, 1);
+      g.strokeCircle(40, 40, 32); g.strokeCircle(40, 40, 21);
+      g.fillStyle(0x0b0b10, 1); g.fillCircle(40, 40, 10);
+      g.lineStyle(0.8, 0x30303a, 1); g.strokeCircle(40, 40, 10);
     });
   }
 
@@ -115,10 +210,10 @@ class GameScene extends Phaser.Scene {
       this.add.rectangle(x, H / 2, 22, H, 0x0e0e13).setScrollFactor(0.35).setDepth(0);
     }
     this.gears = [
-      this.add.image(620, 130, 'gear').setDepth(0).setScrollFactor(0.6).setScale(1.2),
-      this.add.image(1560, 100, 'gear').setDepth(0).setScrollFactor(0.6).setScale(0.8),
-      this.add.image(2380, 150, 'gear').setDepth(0).setScrollFactor(0.6),
-      this.add.image(3050, 110, 'gear').setDepth(0).setScrollFactor(0.6).setScale(1.4)
+      this.add.image(620, 130, 'gear').setDepth(0).setScrollFactor(0.6).setScale(1.2 * AS),
+      this.add.image(1560, 100, 'gear').setDepth(0).setScrollFactor(0.6).setScale(0.8 * AS),
+      this.add.image(2380, 150, 'gear').setDepth(0).setScrollFactor(0.6).setScale(AS),
+      this.add.image(3050, 110, 'gear').setDepth(0).setScrollFactor(0.6).setScale(1.4 * AS)
     ];
     // colunas próximas com rebites
     for (let x = 100; x < 3600; x += 260) {
@@ -156,7 +251,7 @@ class GameScene extends Phaser.Scene {
       this.add.rectangle(cx, GROUND_Y + 3, w, 6, 0x33333c).setDepth(2));
 
     // caixote e plataformas
-    const crate = this.add.image(1600, GROUND_Y - 25, 'crate').setDepth(3);
+    const crate = this.add.image(1600, GROUND_Y - 25, 'crate').setDepth(3).setScale(AS);
     this.physics.add.existing(crate, true); this.solids.push(crate);
     const plat = (x, y, w) => {
       const p = solid(x, y, w, 12, 0x3a3a44, 3);
@@ -181,21 +276,21 @@ class GameScene extends Phaser.Scene {
     this.add.rectangle(1100, GROUND_Y - 62, 12, 16, 0x777780).setDepth(7);
 
     // GEPETO — presente desde o dia 1 (mascarado na 1ª jogada)
-    this.gepeto = this.add.image(1000, GROUND_Y - 29, 'gepeto').setDepth(4);
+    this.gepeto = this.add.image(1000, GROUND_Y - 29, 'gepeto').setDepth(4).setScale(AS);
 
     /* portas e itens */
-    this.door1 = this.add.image(1390, GROUND_Y - 61, 'door').setDepth(5);
+    this.door1 = this.add.image(1390, GROUND_Y - 61, 'door').setDepth(5).setScale(AS);
     this.physics.add.existing(this.door1, true); this.solids.push(this.door1);
-    this.door3 = this.add.image(3310, GROUND_Y - 61, 'door').setDepth(5);
+    this.door3 = this.add.image(3310, GROUND_Y - 61, 'door').setDepth(5).setScale(AS);
     this.physics.add.existing(this.door3, true); this.solids.push(this.door3);
 
     this.add.rectangle(2480, GROUND_Y - 14, 46, 28, 0x30303a).setDepth(3);
     this.add.rectangle(2480, GROUND_Y - 30, 54, 6, 0x44444e).setDepth(3);
-    this.earItem = this.add.image(2480, GROUND_Y - 52, 'ear').setDepth(5);
+    this.earItem = this.add.image(2480, GROUND_Y - 52, 'ear').setDepth(5).setScale(AS);
     this.tweens.add({ targets: this.earItem, y: GROUND_Y - 60, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
 
     this.pipes = [2750, 2950, 3150].map(x => {
-      const p = this.add.image(x, GROUND_Y - 75, 'pipe').setDepth(3);
+      const p = this.add.image(x, GROUND_Y - 75, 'pipe').setDepth(3).setScale(AS);
       p.px = x; return p;
     });
     this.tickPipe = this.pipes[Math.floor(Math.random() * 3)];
@@ -207,12 +302,12 @@ class GameScene extends Phaser.Scene {
     this.robot.body.setSize(26, 46);
     this.physics.add.collider(this.robot, this.solids);
 
-    this.armL = this.add.image(-12, -10, 'r_arm').setOrigin(.5, .08);
-    this.legL = this.add.image(-5, 7, 'r_leg').setOrigin(.5, .08);
-    this.torsoImg = this.add.image(0, -1, 'r_torso');
-    this.legR = this.add.image(5, 7, 'r_leg').setOrigin(.5, .08);
-    this.armR = this.add.image(12, -10, 'r_arm').setOrigin(.5, .08);
-    this.headImg = this.add.image(0, -20, 'r_head');
+    this.armL = this.add.image(-12, -10, 'r_arm').setOrigin(.5, .08).setScale(AS);
+    this.legL = this.add.image(-5, 7, 'r_leg').setOrigin(.5, .08).setScale(AS);
+    this.torsoImg = this.add.image(0, -1, 'r_torso').setScale(AS);
+    this.legR = this.add.image(5, 7, 'r_leg').setOrigin(.5, .08).setScale(AS);
+    this.armR = this.add.image(12, -10, 'r_arm').setOrigin(.5, .08).setScale(AS);
+    this.headImg = this.add.image(0, -20, 'r_head').setScale(AS);
     this.robotC = this.add.container(120, GROUND_Y - 40,
       [this.armL, this.legL, this.torsoImg, this.legR, this.armR, this.headImg]).setDepth(10);
     // tique de cabeça no idle (curioso, mecânico)
@@ -249,7 +344,7 @@ class GameScene extends Phaser.Scene {
     });
 
     /* marcador de interação (mundo) */
-    this.marker = this.add.image(0, 0, 'mark').setDepth(60).setVisible(false);
+    this.marker = this.add.image(0, 0, 'mark').setDepth(60).setVisible(false).setScale(AS);
     this.tweens.add({ targets: this.marker, y: '+=6', duration: 500, yoyo: true, repeat: -1 });
 
     /* interagíveis */
