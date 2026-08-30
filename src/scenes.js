@@ -154,6 +154,56 @@ class GameScene extends Phaser.Scene {
       line(g, 0.6); g.strokeCircle(27.5, 37, 3.4);
     });
 
+    mk('homem', 28, 56, g => {                                           // transeunte: sobretudo e chapéu
+      g.fillStyle(DARK_N, 1);
+      g.fillRoundedRect(7, 17, 15, 27, { tl: 4, tr: 4, bl: 1, br: 1 });   // sobretudo
+      g.fillRect(9.5, 43, 4.5, 13); g.fillRect(15, 43, 4.5, 13);          // pernas
+      g.fillStyle(FILL_N, 1); g.fillCircle(14.5, 10, 6);                  // cabeça
+      g.fillStyle(DARK_N, 1);
+      g.fillRect(7.5, 5.5, 14, 2.6); g.fillRect(10.5, 1.5, 8, 4.5);       // chapéu
+      hatch(g, 15, 20, 7, 22, 2.4);
+      line(g, 0.9);
+      g.strokeCircle(14.5, 10, 6);
+      g.strokeRoundedRect(7, 17, 15, 27, { tl: 4, tr: 4, bl: 1, br: 1 });
+      g.strokeRect(9.5, 43, 4.5, 13); g.strokeRect(15, 43, 4.5, 13);
+      g.strokeRect(7.5, 5.5, 14, 2.6); g.strokeRect(10.5, 1.5, 8, 4.5);
+      line(g, 0.55); g.lineBetween(14.5, 18, 14.5, 42);                   // fecho do sobretudo
+    });
+
+    mk('crianca', 20, 36, g => {                                         // criança: a rua tem quem ainda não aprendeu a temer
+      g.fillStyle(DARK_N, 1);
+      g.fillRoundedRect(5, 13, 10, 15, { tl: 3, tr: 3, bl: 1, br: 1 });
+      g.fillRect(6.5, 27, 3.2, 9); g.fillRect(10.5, 27, 3.2, 9);
+      g.fillStyle(FILL_N, 1); g.fillCircle(10, 7.5, 5.4);
+      line(g, 0.85);
+      g.strokeCircle(10, 7.5, 5.4);
+      g.strokeRoundedRect(5, 13, 10, 15, { tl: 3, tr: 3, bl: 1, br: 1 });
+      g.strokeRect(6.5, 27, 3.2, 9); g.strokeRect(10.5, 27, 3.2, 9);
+    });
+
+    mk('boca', 26, 26, g => {                                            // Boca N1: corneta de gramofone no lixo
+      g.fillStyle(DARK_N, 1);
+      g.fillTriangle(4, 5, 4, 21, 20, 13);                               // pavilhão
+      g.fillRoundedRect(19, 11, 5, 4, 1.4);                              // tubo
+      g.lineStyle(1.1, AMBER_N, 1);
+      g.strokeTriangle(4, 5, 4, 21, 20, 13);
+      g.strokeRoundedRect(19, 11, 5, 4, 1.4);
+      g.lineStyle(0.7, AMBER_N, .75);
+      g.strokeTriangle(7, 8, 7, 18, 17, 13);
+    });
+
+    mk('pernas', 26, 26, g => {                                          // Pernas N1: molas de amortecedor
+      g.lineStyle(1.2, AMBER_N, 1);
+      [8, 18].forEach(x => {
+        g.lineBetween(x, 3, x, 5);
+        for (let i = 0; i < 5; i++) {                                    // espiral da mola
+          g.lineBetween(x - 3.4, 5 + i * 3.2, x + 3.4, 6.6 + i * 3.2);
+          g.lineBetween(x + 3.4, 6.6 + i * 3.2, x - 3.4, 8.2 + i * 3.2);
+        }
+        g.lineBetween(x, 21, x, 23);
+      });
+    });
+
     mk('dog', 26, 16, g => {                                             // o Dog: o primeiro vínculo
       g.fillStyle(FILL_N, 1);
       g.fillRoundedRect(4, 4, 14, 7, 3);                                 // corpo
@@ -235,6 +285,14 @@ class GameScene extends Phaser.Scene {
      renderizar duas vezes. */
   ui(o) { this.uiObjs.push(o); if (this.cam) this.cam.ignore(o); return o; }
 
+  /* Onde o robô fica na tela. Com UM olho ele fica no CENTRO, colado na
+     borda da máscara: tudo que está à frente cai no escuro, e avançar vira
+     um ato de fé — pular onde não se vê. Dar folga à frente aqui destruiria
+     o Olho N1, porque a meia tela viraria só uma tela menor.
+     Com o segundo olho a câmera volta a abrir caminho.
+     screenX = W/2 + offset * zoom, então o offset vai em unidades de mundo. */
+  camLead(zoom) { return (Parts.has('eye2') ? -240 : -26) / zoom; }
+
   /* Os sentidos vêm do registro de partes, nunca de booleanos soltos: a
      interface É o corpo do robô, então quem responde "enxerga?" é o corpo. */
   get hasBrain() { return Parts.has('brain'); }
@@ -294,9 +352,10 @@ class GameScene extends Phaser.Scene {
       this.solids.push(r);
       return r;
     };
-    WORLD.ground.forEach(([cx, w]) => {
-      solid(cx, GROUND_Y + 30, w, 60);
-      this.add.rectangle(cx, GROUND_Y + 3, w, 6, 0x33333c).setDepth(2);   // acabamento
+    WORLD.ground.forEach(([cx, w, y]) => {
+      const top = y === undefined ? GROUND_Y : y;    // 3º valor = piso em outra altura
+      solid(cx, top + 30, w, 60);
+      this.add.rectangle(cx, top + 3, w, 6, 0x33333c).setDepth(2);        // acabamento
     });
     WORLD.walls.forEach(([x, y, w, h]) => solid(x, y, w, h));
     WORLD.platforms.forEach(([x, y, w]) => {
@@ -331,6 +390,14 @@ class GameScene extends Phaser.Scene {
     /* orelha */
     this.earItem = this.add.image(2480, GROUND_Y - 52, 'ear').setDepth(5).setScale(AS);
     this.tweens.add({ targets: this.earItem, y: GROUND_Y - 60, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+
+    /* partes espalhadas pelo mundo — as já adquiridas nem nascem */
+    this.pickups = (WORLD.pickups || []).filter(d => !Parts.has(d.part)).map(d => {
+      const o = this.add.image(d.x, d.y, d.key).setDepth(5).setScale(AS);
+      this.tweens.add({ targets: o, y: d.y - 8, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+      o.def = d;
+      return o;
+    });
 
     this.pipes = WORLD.pipes.map(x => {
       const p = this.add.image(x, GROUND_Y - 75, 'pipe').setDepth(3).setScale(AS);
@@ -372,7 +439,7 @@ class GameScene extends Phaser.Scene {
     this.zone = zoneAt(this.robot.x);
     this.cam.setZoom(this.zone.zoom);
     this.cam.startFollow(this.robot, true, 0.15, 0.10);
-    this.cam.setFollowOffset(-240 / this.zone.zoom, 0);   // folga à frente, em unidades de mundo
+    this.cam.setFollowOffset(this.camLead(this.zone.zoom), 0);
     this.cam.setDeadzone(40, 190);                        // vertical calmo: não balança no pulo
 
     this.uiCam = this.cameras.add(0, 0, W, H);
@@ -415,6 +482,7 @@ class GameScene extends Phaser.Scene {
     const uiSet = new Set(this.uiObjs);
     this.uiCam.ignore(this.children.list.filter(o => !uiSet.has(o)));
 
+    this.buildCrowd();
     this.initStory();
 
     /* jogo já em andamento: pula o prólogo às cegas e devolve os sentidos */
@@ -437,10 +505,10 @@ class GameScene extends Phaser.Scene {
     }).setOrigin(.5).setDepth(700));
 
     // diálogo de NPC: nome de quem fala + a linha
-    this.sayWho = sf(this.add.text(W / 2, 296, '', {
+    this.sayWho = sf(this.add.text(W / 2, 404, '', {
       fontFamily: FONT, fontSize: '15px', color: '#6e6e78', letterSpacing: 5
     }).setOrigin(.5).setDepth(700)).setAlpha(0);
-    this.sayTxt = sf(this.add.text(W / 2, 326, '', {
+    this.sayTxt = sf(this.add.text(W / 2, 434, '', {
       fontFamily: FONT, fontSize: '24px', color: INK,
       align: 'center', wordWrap: { width: 400 }, lineSpacing: 8
     }).setOrigin(.5).setDepth(700)).setAlpha(0);
@@ -547,6 +615,7 @@ class GameScene extends Phaser.Scene {
       Parts.acquire('eye');
       this.headImg.setTexture('r_head_eye');
       this.tweens.add({ targets: this.coverL, alpha: 0, duration: 2800, ease: 'Sine.inOut' });
+      this.tweens.add({ targets: this.cam.followOffset, x: this.camLead(this.zone.zoom), duration: 2800, ease: 'Sine.inOut' });
       this.tweens.add({ targets: this.divider, alpha: .6, duration: 2800 });
       this.time.delayedCall(1500, () => this.banner('eyeGet', 'eyeDesc', 3400));
       this.narrowUI();
@@ -587,7 +656,7 @@ class GameScene extends Phaser.Scene {
     for (const b of this.beats) {
       if (b.done) continue;
       if (b.needs && !b.needs.every(p => Parts.has(p))) continue;
-      if (b.at && x < b.at.x) continue;
+      if (b.at && x < b.at.x) continue;   // sem `at`, o gatilho é só `needs`
       b.done = true;
       Save.setFlag(b.flag);
       this.beatBusy = true;
@@ -606,9 +675,28 @@ class GameScene extends Phaser.Scene {
       d = s.ms || 3400;
       this.thought(T(s.think), d);
     } else if (s.say) {
-      this.say(s.say.who, s.say.key, s.ms || 2400);
+      /* Regra do GDD, não estilo: a mandíbula é sólida até a Boca N1. Se um
+         beat tentar dar voz ao robô antes disso, o passo é engolido e o
+         aviso aparece no console — melhor falhar barulhento na autoria do
+         que quebrar o personagem em silêncio. */
+      if (s.say.who === ROBOT_SPEAKER && !Parts.has('mouth')) {
+        console.warn('story: o robô não tem boca; fala ignorada —', s.say.key);
+      } else {
+        this.say(s.say.who, s.say.key, s.ms || 2400);
+      }
     } else if (s.spawn) {
-      const o = this.world(this.add.image(s.spawn.x, s.spawn.y, s.spawn.key).setDepth(9).setScale(AS));
+      const o = s.spawn.phys
+        ? this.world(this.physics.add.image(s.spawn.x, s.spawn.y, s.spawn.key).setDepth(9).setScale(AS))
+        : this.world(this.add.image(s.spawn.x, s.spawn.y, s.spawn.key).setDepth(9).setScale(AS));
+      if (s.spawn.phys) {
+        /* setSize trabalha em pixels da TEXTURA e o corpo é multiplicado
+           pela escala do sprite. Como as texturas são desenhadas em ART× e
+           exibidas em AS, passar 20x12 aqui produziria um corpo de 5x3 —
+           pequeno demais para pousar em plataforma, e o cachorro escorrega
+           pelas quinas. Dividir por AS devolve o tamanho em pixels de tela. */
+        o.body.setSize(20 / AS, 12 / AS, true);
+        this.physics.add.collider(o, this.solids);   // anda no mesmo chão que o robô
+      }
       o.setAlpha(0);
       this.tweens.add({ targets: o, alpha: 1, duration: 400 });
       this.npc[s.spawn.id] = o;
@@ -627,6 +715,8 @@ class GameScene extends Phaser.Scene {
         this.tweens.add({ targets: o, alpha: 0, duration: 400, onComplete: () => o.destroy() });
         delete this.npc[s.exit.id];
       }
+    } else if (s.panic) {
+      this.panicCrowd();
     } else if (s.follow) {
       this.follower = this.npc[s.follow.id] || null;
     } else if (s.vib) {
@@ -653,19 +743,85 @@ class GameScene extends Phaser.Scene {
     });
   }
 
-  /* O companheiro anda atrás, nunca à frente: quem guia é o jogador. */
+  /* O companheiro anda atrás, nunca à frente: quem guia é o jogador.
+     Ele tem corpo de verdade — cai, colide e PULA para acompanhar em
+     plataforma. Um cachorro que atravessa parede não é companhia, é HUD. */
   updateFollower(dt) {
     const f = this.follower;
-    if (!f || !f.scene) return;
-    const behind = this.robotC.scaleX < 0 ? 52 : -52;
-    const target = this.robot.x + behind;
+    if (!f || !f.scene || !f.body) return;
+    const r = this.robot;
+    const behind = this.robotC.scaleX < 0 ? 56 : -56;
+    const acima = (r.y - f.y) < -34;
+    /* Andando no plano ele fica ATRÁS (quem guia é o jogador). Mas para
+       subir precisa mirar embaixo do robô: o ponto atrás costuma ficar fora
+       da plataforma, e aí ele pula a vida inteira sem nunca alcançar. */
+    const target = acima ? r.x : r.x + behind;
     const dx = target - f.x;
-    if (Math.abs(dx) > 12) {
-      f.x += Math.sign(dx) * Math.min(Math.abs(dx), 0.16 * dt);
+    const grounded = f.body.blocked.down;
+
+    const perto = acima ? 8 : 16;              // subindo, precisa de pontaria melhor
+    if (Math.abs(dx) > perto) {
+      f.setVelocityX(Math.sign(dx) * 168);
       f.setFlipX(dx < 0);
-      this.followBob += dt;
-      f.y = (GROUND_Y - 12) - (Math.abs(Math.sin(this.followBob / 90)) > .7 ? 3 : 0);
+    } else if (grounded) {
+      f.setVelocityX(0);
     }
+
+    /* pula quando o robô está acima, ou quando esbarrou em degrau/parede */
+    const travado = f.body.blocked.left || f.body.blocked.right;
+    if (grounded && (acima || (travado && Math.abs(dx) > 16))) f.setVelocityY(-470);
+
+    /* perdeu o robô de vista (caiu num vão, ficou preso): reaparece atrás.
+       Companheiro nunca vira problema de gerenciamento. */
+    if (f.y > WORLD.h + 200 || Math.abs(r.x - f.x) > 900) {
+      f.setPosition(target, r.y - 24).setVelocity(0, 0);
+    }
+  }
+
+  /* ---------- multidão da rua ----------
+     A avenida precisa estar VIVA antes do grito, senão a fuga não custa
+     nada: só se perde uma rua cheia. */
+  buildCrowd() {
+    this.crowd = (WORLD.crowd || []).map(c => {
+      const o = this.world(this.add.image(c.x, GROUND_Y - (c.key === 'crianca' ? 18 : 28), c.key)
+        .setDepth(c.d || 7).setScale(AS * (c.s || 1)));
+      o.setFlipX(c.dir < 0);
+      o.homeX = c.x; o.dir = c.dir || 1; o.state = 'idle'; o.wait = Math.random() * 2000;
+      return o;
+    });
+  }
+
+  updateCrowd(dt) {
+    if (!this.crowd) return;
+    for (const o of this.crowd) {
+      if (!o.scene) continue;
+      if (o.state === 'idle') {
+        // vaivém curto: gente parada em ponto fixo parece cenário, não gente
+        o.wait -= dt;
+        if (o.wait <= 0) { o.dir *= -1; o.wait = 1800 + Math.random() * 2600; o.setFlipX(o.dir < 0); }
+        o.x += o.dir * 0.012 * dt;
+        if (Math.abs(o.x - o.homeX) > 46) { o.dir *= -1; o.setFlipX(o.dir < 0); }
+      } else if (o.state === 'flee') {
+        o.x += o.fleeDir * 0.34 * dt;
+      }
+    }
+  }
+
+  /* O grito espalha. Cada um foge para o lado oposto ao robô — ninguém
+     precisa dizer nada, a rua esvaziando já é a fala. */
+  panicCrowd() {
+    if (!this.crowd) return;
+    this.crowd.forEach((o, i) => {
+      if (!o.scene || o.state === 'flee') return;
+      this.time.delayedCall(120 * i + Math.random() * 300, () => {
+        if (!o.scene) return;
+        o.state = 'flee';
+        o.fleeDir = o.x >= this.robot.x ? 1 : -1;
+        o.setFlipX(o.fleeDir < 0);
+        this.tweens.add({ targets: o, alpha: 0, duration: 2200, delay: 900,
+          onComplete: () => o.destroy() });
+      });
+    });
   }
 
   /* Com o olho nível 1, só metade da tela existe: a UI migra para o centro
@@ -677,6 +833,19 @@ class GameScene extends Phaser.Scene {
      this.sayWho, this.sayTxt].forEach(t => t.setX(W / 4));
     this.thoughtTxt.setWordWrapWidth(400);
     this.toastTxt.setWordWrapWidth(400);
+  }
+
+  /* Aquisição genérica de parte. Toda parte entra por aqui: o banner, o
+     custo e a persistência ficam num lugar só, e beat novo não reimplementa
+     aquisição. */
+  acquirePart(o) {
+    const d = o.def;
+    if (!Parts.acquire(d.part)) return;
+    this.pickups = this.pickups.filter(x => x !== o);
+    o.destroy();
+    if (Parts.has('ear')) { Snd.chime(); }
+    vib([30, 60, 30]);
+    this.banner(d.part + 'Get', d.part + 'Desc', 3800);
   }
 
   /* O tique-taque do puzzle. Separado porque o "continuar" precisa religá-lo
@@ -809,7 +978,9 @@ class GameScene extends Phaser.Scene {
     else if (right) r.setVelocityX(180);
     else r.setVelocityX(0);
 
-    if (jump && grounded) { r.setVelocityY(-430); vib(15); }
+    /* Pernas N1 é a diferença entre alcançar e não alcançar — por isso o
+       valor sai do registro de partes, não de uma constante. */
+    if (jump && grounded) { r.setVelocityY(Parts.has('legs') ? -565 : -430); vib(15); }
 
     /* --- animação segmentada: dura, mas viva --- */
     const c = this.robotC;
@@ -822,7 +993,7 @@ class GameScene extends Phaser.Scene {
     if (z !== this.zone) {
       this.zone = z;
       this.cam.zoomTo(z.zoom, 1100, 'Sine.easeInOut');
-      this.tweens.add({ targets: this.cam.followOffset, x: -240 / z.zoom, duration: 1100, ease: 'Sine.easeInOut' });
+      this.tweens.add({ targets: this.cam.followOffset, x: this.camLead(z.zoom), duration: 1100, ease: 'Sine.easeInOut' });
     }
     if (left) c.scaleX = -1; else if (right) c.scaleX = 1;
     const moving = left || right;
@@ -866,6 +1037,13 @@ class GameScene extends Phaser.Scene {
     // orelha
     if (!this.hasEar && this.hasEye && Math.abs(r.x - 2480) < 34 && r.y > GROUND_Y - 110) this.acquireEar();
 
+    // partes espalhadas
+    for (const o of this.pickups) {
+      if (!o.scene) continue;
+      if (o.def.needs && !o.def.needs.every(pt => Parts.has(pt))) continue;
+      if (Math.abs(r.x - o.x) < 34 && Math.abs(r.y - o.def.y) < 60) { this.acquirePart(o); break; }
+    }
+
     // porta 3 trancada
     if (!this.doorOpen && r.x > 3250 && r.x < 3480 && time - this.lastToast > 3000) {
       this.lastToast = time;
@@ -883,9 +1061,10 @@ class GameScene extends Phaser.Scene {
     // história e companheiro
     this.checkBeats(r.x);
     this.updateFollower(dt);
+    this.updateCrowd(dt);
 
     // queda = remontagem (era lata: sem game over)
-    if (r.y > 700) {
+    if (r.y > WORLD.h + 120) {
       vib([120, 80, 120]);
       this.cameras.main.flash(300, 10, 10, 12);
       r.setPosition(this.checkpoint.x, this.checkpoint.y).setVelocity(0, 0);

@@ -40,5 +40,17 @@
   "thinkMonster1": "eu não fiz nada.\neu só saí.",
   "thinkMonster2": "ela sabe o que eu sou.\neu não.",
   "thinkDog1": "esse não correu.",
-  "thinkDog2": "não corre.\nnão grita.\nfica."
+  "thinkDog2": "não corre.\nnão grita.\nfica.",
+  "whoRobot": "ROBÔ",
+  "thinkFork": "dois caminhos.\num sobe pela lateral do prédio.\no outro desce, e o fundo não se vê.",
+  "mouthGet": "BOCA",
+  "mouthDesc": "uma corneta no lixo. serve.",
+  "thinkMouth1": "tem ar passando por dentro de mim agora.",
+  "robotFirstWord": "...eu não queria ter empurrado.",
+  "thinkMouth2": "eu não decidi dizer isso.\nde onde veio essa frase?",
+  "legsGet": "PERNAS",
+  "legsDesc": "molas. o chão fica mais longe.",
+  "thinkLegs1": "as juntas cederam.\nnão quebraram — cederam.",
+  "thinkLegs2": "posso alcançar mais alto.\ne cair de mais alto.",
+  "thinkBoth": "molas e uma corneta.\nestou juntando um corpo com o que a cidade jogou fora."
 }

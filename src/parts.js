@@ -11,9 +11,15 @@ const PARTS = {
   brain:  { tier: 1, sense: null,    ability: 'pensar',            cost: 'consciência: a partir daqui há culpa' },
   eye:    { tier: 1, sense: 'video', ability: 'metade da tela',    cost: 'só metade — o resto do mundo segue cego' },
   ear:    { tier: 1, sense: 'audio', ability: 'som do jogo',       cost: 'o mundo passa a ter ruído; nem tudo se quer ouvir' },
+  mouth:  { tier: 1, sense: null,    ability: 'falar',             cost: 'o que se diz passa a poder ser usado contra você' },
   legs:   { tier: 1, sense: null,    ability: 'pulo alto',         cost: 'cansaço: o pulo piora sob esforço' },
+  eye2:   { tier: 2, sense: 'video', ability: 'a tela inteira',     cost: 'ver o que se preferia não ter visto' },
   hands:  { tier: 2, sense: null,    ability: 'agarrar, destravar', cost: 'o que se agarra também machuca' }
 };
+
+/* Quem é o falante `whoRobot` nas falas de src/story.js. Existe como
+   constante porque o runtime BLOQUEIA fala do robô sem boca. */
+const ROBOT_SPEAKER = 'whoRobot';
 
 const Parts = {
   owned: new Set(),

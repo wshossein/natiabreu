@@ -44,6 +44,9 @@ O prólogo às cegas é UMA cena completa (Gepeto existe, a morte acontece), ape
 - **Cenário novo vai em `src/world.js`, nunca cravado no `create()`.** O `create()` interpreta dados; se você está escrevendo coordenadas dentro dele, está no arquivo errado.
 - **Duas câmeras:** `this.cam` (mundo, com zoom por zona) e `this.uiCam` (fixa em 1). Todo objeto de UI criado depois do `create()` precisa passar por `this.ui(obj)`, senão renderiza duas vezes e o zoom o deforma.
 - Zoom é linguagem: interior aproxima (o robô enche a sala), exterior afasta (a cidade é grande e ele é pequeno). Ajustar em `WORLD.zones`.
+- **Com um olho só, o robô fica no CENTRO da tela, colado na borda da máscara** (`camLead()`). Tudo à frente cai no escuro e avançar vira ato de fé. Dar folga à frente destrói o Olho N1: a meia tela vira só uma tela menor. A folga volta com o Olho N2.
+- **`body.setSize()` trabalha em pixels da TEXTURA e é multiplicado pela escala do sprite.** Como as texturas são desenhadas em `ART`× e exibidas em `AS`, passar o tamanho de tela direto gera um corpo 4× menor. Sempre `setSize(w / AS, h / AS, true)` em sprite com física.
+- **O robô não fala sem boca.** O runtime bloqueia `say` com `who: ROBOT_SPEAKER` enquanto `Parts.has('mouth')` for falso, e avisa no console. A mandíbula sólida é regra do GDD, não estilo.
 - **História é dado.** Beat novo é entrada em `src/story.js`; o runtime já interpreta `think`, `say`, `spawn`, `move`, `face`, `exit`, `follow`, `vib`, `wait`. Se você está escrevendo cutscene dentro do `scenes.js`, está no arquivo errado.
 - `thought()` é a voz interna do robô (itálico, sem nome); `say()` é fala de NPC (com nome de quem fala). Não misturar: um só existe porque ele tem cérebro, o outro vem de fora.
 - Objeto de mundo criado depois do `create()` precisa passar por `this.world(obj)`, assim como UI passa por `this.ui(obj)`. Sem isso ele renderiza nas duas câmeras.
@@ -57,6 +60,8 @@ Servidor estático na raiz (fetch dos JSONs exige http): `python3 -m http.server
 
 Pronto: prólogo às cegas, cérebro, olho, orelha, puzzle do tique-taque, saída para a cidade. Arte em nanquim procedural. Mapa data-driven com zonas de câmera. Save em localStorage com "continuar" (quem tem o olho não repete o prólogo). Registro de partes do corpo.
 
-Ato 1 em construção: beats 1 a 6 jogáveis (ver `docs/ATO1.md`). Próximos: beat 7 (o Detetive), beat 8 (descida ao Ground guiada pelo Dog), beat 9 (Boca N1). O jogo é mais história que desafio — obstáculo só entra quando significa alguma coisa.
+Ato 1 em construção: beats 1 a 9 jogáveis (ver `docs/ATO1.md`). A avenida tem multidão que entra em pânico, o Dog tem corpo e acompanha em plataforma, e há **bifurcação**: escada de incêndio (Pernas N1) e beco (Boca N1), em qualquer ordem, nenhuma tranca a outra.
+
+Próximos: beat 7 (o Detetive), beat 10 (o Sheriff), beat 11 (descida aos Undergrounds). O jogo é mais história que desafio — obstáculo só entra quando significa alguma coisa.
 
 Adiado a pedido: passe de arte do prólogo e do Gepeto — é a última cena a ser produzida. **Atenção:** adiar a ARTE é seguro; o que não pode é virar uma cena separada. O prólogo às cegas e o replay revelador têm de continuar sendo a MESMA cena com camadas ligadas/desligadas (GDD 2.2).

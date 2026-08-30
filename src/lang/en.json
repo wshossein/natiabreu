@@ -40,5 +40,17 @@
   "thinkMonster1": "I did nothing.\nI only walked out.",
   "thinkMonster2": "she knows what I am.\nI don't.",
   "thinkDog1": "this one didn't run.",
-  "thinkDog2": "doesn't run.\ndoesn't scream.\nstays."
+  "thinkDog2": "doesn't run.\ndoesn't scream.\nstays.",
+  "whoRobot": "ROBOT",
+  "thinkFork": "two ways.\none climbs the side of the building.\nthe other goes down, and the bottom isn't visible.",
+  "mouthGet": "MOUTH",
+  "mouthDesc": "a horn in the trash. it will do.",
+  "thinkMouth1": "there is air moving through me now.",
+  "robotFirstWord": "...I didn't mean to push him.",
+  "thinkMouth2": "I did not decide to say that.\nwhere did that sentence come from?",
+  "legsGet": "LEGS",
+  "legsDesc": "springs. the ground is further away.",
+  "thinkLegs1": "the joints gave.\nnot broke — gave.",
+  "thinkLegs2": "I can reach higher.\nand fall from higher.",
+  "thinkBoth": "springs and a horn.\nI am assembling a body out of what the city threw away."
 }

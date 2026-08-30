@@ -54,9 +54,10 @@ const STORY = [
       { face: { id: 'mulher', dir: -1 }, ms: 1400 },
       { say: { who: 'whoWoman', key: 'womanGasp' }, ms: 2200 },
       { vib: [180], ms: 200 },
-      { say: { who: 'whoWoman', key: 'womanMonster' }, ms: 1600 },
-      { move: { id: 'mulher', x: 4820, ms: 1800 }, ms: 1500 },
-      { exit: { id: 'mulher' }, ms: 600 },
+      { say: { who: 'whoWoman', key: 'womanMonster' }, ms: 900 },
+      { panic: true, ms: 900 },                       // a rua inteira esvazia
+      { move: { id: 'mulher', x: 4980, ms: 2000 }, ms: 1600 },
+      { exit: { id: 'mulher' }, ms: 900 },
       { think: 'thinkMonster1', ms: 3800 },
       { think: 'thinkMonster2', ms: 4200 }
     ]
@@ -74,7 +75,7 @@ const STORY = [
     flag: 'st_cidade_dog',
     steps: [
       { wait: 900 },
-      { spawn: { id: 'dog', key: 'dog', x: 4640, y: GROUND_Y - 12 }, ms: 700 },
+      { spawn: { id: 'dog', key: 'dog', x: 4640, y: GROUND_Y - 20, phys: true }, ms: 700 },
       { face: { id: 'dog', dir: -1 }, ms: 900 },
       { move: { id: 'dog', x: 4400, ms: 1500 }, ms: 1700 },
       { think: 'thinkDog1', ms: 3400 },
@@ -82,6 +83,62 @@ const STORY = [
       { vib: [20, 60, 20], ms: 400 },
       { think: 'thinkDog2', ms: 3600 },
       { follow: { id: 'dog' } }
+    ]
+  },
+
+  /* ---- A BIFURCAÇÃO ----
+     Não aponta caminho, só nomeia que existem dois. O jogador escolhe, e a
+     escolha não é trancada: pegar um não fecha o outro (GDD seção 9 — a
+     ordem é princípio, não contrato). */
+  {
+    id: 'cidade-escolha',
+    at: { x: 4400 },
+    needs: ['eye'],
+    flag: 'st_cidade_escolha',
+    steps: [
+      { wait: 600 },
+      { think: 'thinkFork', ms: 4400 }
+    ]
+  },
+
+  /* ---- QUEM ESCOLHEU A VOZ ----
+     Beat da Boca. O custo do GDD tem de ser sentido, não anunciado: ele
+     ganha voz e a voz não é dele. */
+  {
+    id: 'escolha-boca',
+    needs: ['mouth'],
+    flag: 'st_escolha_boca',
+    steps: [
+      { wait: 1400 },
+      { think: 'thinkMouth1', ms: 3800 },
+      { say: { who: 'whoRobot', key: 'robotFirstWord' }, ms: 2600 },
+      { think: 'thinkMouth2', ms: 4400 }
+    ]
+  },
+
+  /* ---- QUEM ESCOLHEU AS PERNAS ---- */
+  {
+    id: 'escolha-pernas',
+    needs: ['legs'],
+    flag: 'st_escolha_pernas',
+    steps: [
+      { wait: 1400 },
+      { think: 'thinkLegs1', ms: 3600 },
+      { vib: [40, 50, 40], ms: 400 },
+      { think: 'thinkLegs2', ms: 4000 }
+    ]
+  },
+
+  /* ---- AS DUAS ----
+     Só dispara para quem voltou e pegou a outra. Recompensa a exploração
+     sem exigi-la. */
+  {
+    id: 'escolha-ambas',
+    needs: ['mouth', 'legs'],
+    flag: 'st_escolha_ambas',
+    steps: [
+      { wait: 2000 },
+      { think: 'thinkBoth', ms: 4600 }
     ]
   }
 ];
