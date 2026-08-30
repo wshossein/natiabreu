@@ -208,6 +208,37 @@ class GameScene extends Phaser.Scene {
       g.fillStyle(LINE_N, .9); g.fillCircle(11.5, 23, 1.1);              // distintivo
     });
 
+    mk('ladrao', 28, 54, g => {                                          // o Bom Ladrão: capuz, magro, sem chapéu
+      g.fillStyle(DARK_N, 1);
+      g.fillTriangle(14, 4, 4, 22, 24, 22);                              // capuz
+      g.fillRoundedRect(7, 20, 14, 24, { tl: 3, tr: 3, bl: 1, br: 1 });
+      g.fillRect(9.5, 43, 4, 11); g.fillRect(15, 43, 4, 11);
+      g.fillStyle(FILL_N, 1); g.fillCircle(14, 14, 4.6);                 // rosto na sombra do capuz
+      hatch(g, 15, 23, 6, 19, 2.2);
+      line(g, 0.9);
+      g.strokeTriangle(14, 4, 4, 22, 24, 22);
+      g.strokeRoundedRect(7, 20, 14, 24, { tl: 3, tr: 3, bl: 1, br: 1 });
+      g.strokeRect(9.5, 43, 4, 11); g.strokeRect(15, 43, 4, 11);
+      line(g, 0.55); g.lineBetween(21, 26, 25, 33);                      // braço estendido: ele oferece
+    });
+
+    mk('bracos', 26, 26, g => {                                          // Braços N1: par de bielas
+      g.lineStyle(1.3, AMBER_N, 1);
+      [9, 17].forEach(x => {
+        g.strokeRoundedRect(x - 2.6, 4, 5.2, 12, 2.2);
+        g.strokeCircle(x, 19.5, 3.4);
+        g.lineBetween(x, 16, x, 16.2);
+      });
+      g.lineStyle(0.8, AMBER_N, .7); g.lineBetween(9, 10, 17, 10);
+    });
+
+    mk('alavanca', 20, 34, g => {                                        // alavanca: exige Braços
+      g.fillStyle(DARK_N, 1); g.fillRoundedRect(5, 22, 10, 11, 2);
+      line(g, 0.9); g.strokeRoundedRect(5, 22, 10, 11, 2);
+      g.lineStyle(1.4, AMBER_N, 1); g.lineBetween(10, 22, 15, 4);
+      g.fillStyle(AMBER_N, 1); g.fillCircle(15, 3, 2.6);
+    });
+
     mk('grade', 40, 14, g => {                                           // a descida para os Undergrounds
       g.fillStyle(0x07070a, 1); g.fillRect(2, 3, 36, 11);
       line(g, 0.9); g.strokeRect(2, 3, 36, 11);
@@ -380,6 +411,25 @@ class GameScene extends Phaser.Scene {
           cable.strokePath();
         }
       }
+      if (z.decor === 'under') {
+        /* Civilização antiga (GDD seção 3): colunas quebradas, teto baixo,
+           raízes descendo. Nada de engrenagem — aqui é anterior à máquina. */
+        const solo = 1400;
+        this.add.rectangle((x0 + x1) / 2, solo - 300, x1 - x0, 26, 0x16161d).setDepth(1);   // teto
+        for (let x = x0 + 90; x < x1; x += 210) {
+          const alt = 190 + ((x * 7) % 70);
+          this.add.rectangle(x, solo - alt / 2, 22, alt, 0x14141b).setDepth(1);             // coluna
+          this.add.rectangle(x, solo - alt, 34, 10, 0x1c1c25).setDepth(1);                  // capitel
+          this.add.rectangle(x, solo - 6, 30, 12, 0x1c1c25).setDepth(1);                    // base
+        }
+        const raiz = this.add.graphics().setDepth(1);
+        raiz.lineStyle(2, 0x1a1a22);
+        for (let x = x0 + 40; x < x1; x += 130) {
+          raiz.beginPath(); raiz.moveTo(x, solo - 288);
+          for (let i = 1; i <= 6; i++) raiz.lineTo(x + Math.sin(i * 1.7 + x) * 9, solo - 288 + i * 13);
+          raiz.strokePath();
+        }
+      }
     });
     // faixas verticais de parallax só onde é interior
     for (let x = 40; x < 1500; x += 190) {
@@ -438,6 +488,15 @@ class GameScene extends Phaser.Scene {
     /* orelha */
     this.earItem = this.add.image(2480, GROUND_Y - 52, 'ear').setDepth(5).setScale(AS);
     this.tweens.add({ targets: this.earItem, y: GROUND_Y - 60, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+
+    /* portão dos Undergrounds + alavanca: a primeira coisa do jogo que exige
+       uma parte específica para ser usada. Sem braços não há força. */
+    this.gate = this.add.rectangle(8320, 1340, 26, 120, 0x2b2b34).setDepth(5);
+    this.physics.add.existing(this.gate, true); this.solids.push(this.gate);
+    this.add.rectangle(8320, 1340, 14, 108, 0x1b1b23).setDepth(5);
+    this.lever = this.add.image(8210, 1366, 'alavanca').setDepth(5).setScale(AS);
+    this.gateOpen = Save.flag('gateOpen');
+    if (this.gateOpen) { this.gate.y -= 118; this.gate.body.enable = false; this.lever.setAngle(-40); }
 
     /* partes espalhadas pelo mundo — as já adquiridas nem nascem */
     this.pickups = (WORLD.pickups || []).filter(d => !Parts.has(d.part)).map(d => {
@@ -523,6 +582,8 @@ class GameScene extends Phaser.Scene {
     this.interactables = [
       { x: 985, r: 70, my: GROUND_Y - 120, label: () => T('push'), on: () => !this.pushed, cb: () => this.doPush() },
       { x: 1100, r: 46, my: GROUND_Y - 100, label: () => T('use'), on: () => this.hasEye, cb: () => this.toast(T('photo'), 3600) },
+      { x: 8210, r: 110, my: 1290, label: () => T('use'),
+        on: () => !this.gateOpen && this.zone.decor === 'under', cb: () => this.pullLever() },
       ...this.pipes.map(p => ({
         x: p.px, r: 55, my: GROUND_Y - 170, label: () => T('use'),
         on: () => this.hasEye && !this.doorOpen, cb: () => this.tryPipe(p)
@@ -708,7 +769,11 @@ class GameScene extends Phaser.Scene {
     for (const b of this.beats) {
       if (b.done) continue;
       if (b.needs && !b.needs.every(p => Parts.has(p))) continue;
-      if (b.at && x < b.at.x) continue;   // sem `at`, o gatilho é só `needs`
+      /* Faixa, não limiar. O mapa é um eixo X só, e os Undergrounds ficam à
+         DIREITA da cidade: com gatilho de "passou de X", todo beat do Ato 1
+         ainda pendente disparava debaixo da terra. `xMax` fecha a cena na
+         área onde ela acontece. Sem `at`, o gatilho é só `needs`. */
+      if (b.at && (x < b.at.x || (b.at.xMax !== undefined && x > b.at.xMax))) continue;
       b.done = true;
       Save.setFlag(b.flag);
       this.beatBusy = true;
@@ -767,6 +832,11 @@ class GameScene extends Phaser.Scene {
         this.tweens.add({ targets: o, alpha: 0, duration: 400, onComplete: () => o.destroy() });
         delete this.npc[s.exit.id];
       }
+    } else if (s.setFlag) {
+      /* Marca um instante DENTRO da cena. A flag do beat sobe quando ele
+         começa; isto sobe na hora exata — o que permite, por exemplo, uma
+         parte só aparecer no mundo depois de alguém oferecê-la. */
+      Save.setFlag(s.setFlag);
     } else if (s.block) {
       /* Bloqueio invisível: quando a história diz que não dá para passar,
          não pode dar para passar. NPC não colide, então o funil precisa de
@@ -900,6 +970,20 @@ class GameScene extends Phaser.Scene {
     this.toastTxt.setWordWrapWidth(400);
   }
 
+  /* A alavanca é o teste do corpo: sem Braços ele encosta e não move.
+     A recusa é informação, não obstáculo — ensina o que falta. */
+  pullLever() {
+    if (this.gateOpen) return;
+    if (!Parts.has('arms')) { vib(90); Snd.buzz(); this.toast(T('leverNoArms'), 2600); return; }
+    this.gateOpen = true;
+    Save.setFlag('gateOpen');
+    Snd.clank(); vib([40, 40, 90]);
+    this.tweens.add({ targets: this.lever, angle: -40, duration: 420 });
+    this.tweens.add({ targets: this.gate, y: this.gate.y - 118, duration: 1100, ease: 'Quad.out' });
+    this.time.delayedCall(1100, () => { this.gate.body.enable = false; });
+    this.toast(T('leverOpen'), 2600);
+  }
+
   /* Aquisição genérica de parte. Toda parte entra por aqui: o banner, o
      custo e a persistência ficam num lugar só, e beat novo não reimplementa
      aquisição. */
@@ -1008,27 +1092,40 @@ class GameScene extends Phaser.Scene {
   }
   closePause() { if (this.pauseUI) { this.pauseUI.forEach(o => o.destroy()); this.pauseUI = null; } }
 
-  endGame() {
+  /* Quebra de ato. A grade não encerra o jogo: ela é o corte entre o Ato 1
+     e o Ato 2. `finished` continua sendo só do fim do jogo inteiro — é o
+     gatilho do replay do prólogo (GDD 2.2b) e não pode disparar aqui. */
+  actBreak() {
     if (this.ended) return;
     this.ended = true;
-    /* `finished` é o gatilho do twist (GDD 2.2b): quem termina uma vez ganha
-       o direito de rever o prólogo com todos os sentidos. Ainda não há
-       replay implementado — mas a flag já é gravada, para o replay não
-       depender de o jogador terminar de novo. */
-    Save.set('finished', true);
+    Save.setFlag('ato1');
     const d = 950;
     const bg = this.ui(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0).setScrollFactor(0).setDepth(d));
     this.tweens.add({ targets: bg, fillAlpha: 1, duration: 1600 });
-    this.time.delayedCall(1700, () => {
-      this.ui(this.add.text(W / 2, 210, T('endT'), { fontFamily: FONT, fontSize: '36px', color: INK, letterSpacing: 8 }).setOrigin(.5).setScrollFactor(0).setDepth(d + 1));
-      this.ui(this.add.text(W / 2, 262, T('endB'), { fontFamily: FONT, fontSize: '18px', color: DIM }).setOrigin(.5).setScrollFactor(0).setDepth(d + 1));
-      const again = this.ui(this.add.text(W / 2, 340, T('again'), {
-        fontFamily: FONT, fontSize: '20px', color: AMBER, letterSpacing: 3,
-        backgroundColor: '#16161a', padding: { x: 26, y: 10 }
-      }).setOrigin(.5).setScrollFactor(0).setDepth(d + 1).setInteractive({ useHandCursor: true }));
-      again.on('pointerdown', () => { Save.reset(); Parts.reset(); this.scene.restart(); });
+    this.time.delayedCall(1800, () => {
+      const t1 = this.ui(this.add.text(W / 2, 226, T('act1End'), { fontFamily: FONT, fontSize: '30px', color: DIM, letterSpacing: 8 }).setOrigin(.5).setScrollFactor(0).setDepth(d + 1).setAlpha(0));
+      const t2 = this.ui(this.add.text(W / 2, 286, T('act2Title'), { fontFamily: FONT, fontSize: '38px', color: INK, letterSpacing: 10 }).setOrigin(.5).setScrollFactor(0).setDepth(d + 1).setAlpha(0));
+      const t3 = this.ui(this.add.text(W / 2, 336, T('act2Sub'), { fontFamily: FONT, fontSize: '17px', color: '#6e6e78' }).setOrigin(.5).setScrollFactor(0).setDepth(d + 1).setAlpha(0));
+      this.tweens.add({ targets: [t1, t2, t3], alpha: 1, duration: 1200, yoyo: true, hold: 3600,
+        onComplete: () => {
+          [t1, t2, t3].forEach(t => t.destroy());
+          // corte: ele desce. A queda em si não se joga — é a virada de ato.
+          const sp = WORLD.ato2Spawn;
+          this.checkpoint = { x: sp.x, y: sp.y };
+          Save.set('spawn', this.checkpoint);
+          this.robot.setPosition(sp.x, sp.y).setVelocity(0, 0);
+          this.robotC.setPosition(sp.x, sp.y);
+          if (this.follower) this.follower.setPosition(sp.x - 50, sp.y).setVelocity(0, 0);
+          this.zone = zoneAt(sp.x);
+          this.cam.setZoom(this.zone.zoom);
+          this.cam.setFollowOffset(this.camLead(this.zone.zoom), 0);
+          this.ended = false;
+          vib([200, 120, 60, 60, 200]);
+          this.tweens.add({ targets: bg, fillAlpha: 0, duration: 2200, onComplete: () => bg.destroy() });
+        } });
     });
   }
+
 
   /* ---------- update ---------- */
   update(time, dt) {
@@ -1106,6 +1203,8 @@ class GameScene extends Phaser.Scene {
     for (const o of this.pickups) {
       if (!o.scene) continue;
       if (o.def.needs && !o.def.needs.every(pt => Parts.has(pt))) continue;
+      // parte que alguém entrega só existe depois da cena da entrega
+      if (o.def.afterFlag && !Save.flag(o.def.afterFlag)) continue;
       if (Math.abs(r.x - o.x) < 34 && Math.abs(r.y - o.def.y) < 60) { this.acquirePart(o); break; }
     }
 
@@ -1140,7 +1239,7 @@ class GameScene extends Phaser.Scene {
     /* Fim do Ato 1 na grade. Só depois da cena do Sheriff (é ela que empurra
        o robô para baixo) e nunca no meio de um beat, senão o ato termina por
        cima de uma fala. */
-    if (Save.flag('st_ato1_sheriff') && !this.beatBusy && r.x > WORLD.finishX) this.endGame();
+    if (!Save.flag('ato1') && Save.flag('st_ato1_sheriff') && !this.beatBusy && r.x > WORLD.finishX) this.actBreak();
 
     // interação contextual (espaço/E, marcador no mundo, botão touch)
     let found = null;

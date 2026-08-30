@@ -12,8 +12,8 @@ const WORLD = {
      o robô até o fim jogável (~5430). Sem margem ela gruda no limite do mundo,
      e o robô escorrega para a borda da máscara — que é exatamente o que a
      centralização existe para impedir. A folga fica na metade cega da tela. */
-  w: 6300,
-  h: 900,   // o beco desce abaixo da rua
+  w: 8600,
+  h: 1700,  // o beco desce abaixo da rua; os Undergrounds, muito mais
   spawn: { x: 120, y: GROUND_Y - 40 },
 
   zones: [
@@ -21,7 +21,14 @@ const WORLD = {
     { id: 'duto',    kind: 'interior', x0: 1500, x1: 2620, zoom: 1.45, decor: 'lab'  },
     { id: 'canos',   kind: 'interior', x0: 2620, x1: 3480, zoom: 1.70, decor: 'lab'  },
     { id: 'soleira', kind: 'interior', x0: 3480, x1: 3760, zoom: 1.25, decor: 'lab'  },
-    { id: 'cidade',  kind: 'exterior', x0: 3760, x1: 6000, zoom: 0.92, decor: 'city' }
+    { id: 'cidade',  kind: 'exterior', x0: 3760, x1: 6300, zoom: 0.92, decor: 'city' },
+
+    /* ATO 2 — UNDERGROUNDS. Interior fechado e apertado: depois da avenida
+       aberta, o zoom voltar a apertar é o próprio ato mudando de respiração.
+       Fica em outro trecho do mapa e o jogador chega por corte, não andando:
+       a descida pela grade é a quebra de ato. */
+    { id: 'sub-boca',  kind: 'interior', x0: 6300, x1: 7250, zoom: 1.55, decor: 'under' },
+    { id: 'sub-salao', kind: 'interior', x0: 7250, x1: 8600, zoom: 1.35, decor: 'under' }
   ],
 
   /* chão: [centro, largura] — os vãos entre faixas são as quedas */
@@ -29,7 +36,11 @@ const WORLD = {
     [850, 1700], [2010, 380], [2975, 1250],
     [4085, 1070],            // avenida, trecho oeste (3550..4620)
     [5480, 1320],            // avenida, trecho leste (4820..6140)
-    [4720, 240, 820]         // fundo do beco (4600..4840) — [cx, larg, y]
+    [4720, 240, 820],        // fundo do beco (4600..4840) — [cx, larg, y]
+
+    /* --- Undergrounds (Ato 2), lá embaixo --- */
+    [6800, 900, 1400],       // chegada (6350..7250)
+    [7900, 1300, 1400]       // salão da civilização antiga (7250..8550)
   ],
 
   platforms: [
@@ -48,7 +59,12 @@ const WORLD = {
     [4670, 596, 110],        // L3 — pega quem cai da rua (4615..4725)
     [4800, 660, 90],         // L2 — (4755..4845)
     [4690, 740, 110],        // L1 — (4635..4745)
-    [4780, 520, 70]          // L4 — último degrau antes da avenida (4745..4815)
+    [4780, 520, 70],         // L4 — último degrau antes da avenida (4745..4815)
+
+    /* --- Undergrounds --- */
+    [6620, 1330, 90], [6760, 1258, 80],      // entulho da queda, subida curta
+    [7480, 1320, 110], [7660, 1250, 100],    // degraus do salão
+    [8060, 1300, 120]
   ],
 
   /* paredes e blocos sólidos: [x, y, w, h] */
@@ -85,7 +101,8 @@ const WORLD = {
      seção 9 — a ordem é princípio, não contrato). */
   pickups: [
     { part: 'legs',  key: 'pernas', x: 3930, y: 110, needs: ['eye'] },
-    { part: 'mouth', key: 'boca',   x: 4710, y: 786, needs: ['eye'] }
+    { part: 'mouth', key: 'boca',   x: 4710, y: 786, needs: ['eye'] },
+    { part: 'arms',  key: 'bracos', x: 7210, y: 1366, needs: ['eye'], afterFlag: 'bracosOfertados' }
   ],
 
   /* cenário. t: rect | circle | tri | img
@@ -166,6 +183,9 @@ const WORLD = {
   gears: [[620, 130, 1.2], [1560, 100, 0.8], [2380, 150, 1.0], [3050, 110, 1.4]],
 
   pipes: [2750, 2950, 3150],
+
+  /* onde o robô cai ao descer pela grade */
+  ato2Spawn: { x: 6420, y: 1360 },
 
   /* fim do slice: o robô alcança a avenida */
   finishX: 5376   // a grade: fim do Ato 1

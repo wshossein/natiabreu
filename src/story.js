@@ -29,7 +29,7 @@ const STORY = [
      quase tudo, o texto só nomeia o que ele sentiu. */
   {
     id: 'cidade-teto',
-    at: { x: 3830 },
+    at: { x: 3830, xMax: 6200 },
     needs: ['eye'],
     flag: 'st_cidade_teto',
     steps: [
@@ -45,7 +45,7 @@ const STORY = [
      do prólogo, onde cometeu sem saber. */
   {
     id: 'cidade-monstro',
-    at: { x: 3980 },
+    at: { x: 3980, xMax: 6200 },
     needs: ['eye'],
     flag: 'st_cidade_monstro',
     steps: [
@@ -70,7 +70,7 @@ const STORY = [
      beat anterior, que é por isso que os dois são vizinhos. */
   {
     id: 'cidade-dog',
-    at: { x: 4260 },
+    at: { x: 4260, xMax: 6200 },
     needs: ['eye'],
     flag: 'st_cidade_dog',
     steps: [
@@ -92,7 +92,7 @@ const STORY = [
      ordem é princípio, não contrato). */
   {
     id: 'cidade-escolha',
-    at: { x: 4400 },
+    at: { x: 4400, xMax: 6200 },
     needs: ['eye'],
     flag: 'st_cidade_escolha',
     steps: [
@@ -137,7 +137,7 @@ const STORY = [
      não tem como ligar isso ao que ele mesmo fez no escuro. */
   {
     id: 'ato1-detetive',
-    at: { x: 5000 },
+    at: { x: 5000, xMax: 6200 },
     needs: ['eye'],
     flag: 'st_ato1_detetive',
     steps: [
@@ -156,7 +156,7 @@ const STORY = [
      na direção dos Undergrounds sem que ninguém precise dizer "vá por ali". */
   {
     id: 'ato1-sheriff',
-    at: { x: 5180 },
+    at: { x: 5180, xMax: 6200 },
     needs: ['eye'],
     flag: 'st_ato1_sheriff',
     steps: [
@@ -186,6 +186,63 @@ const STORY = [
     steps: [
       { wait: 2000 },
       { think: 'thinkBoth', ms: 4600 }
+    ]
+  },
+
+  /* ============ ATO 2 — CARNE ============ */
+
+  /* ---- CHEGADA ----
+     Depois da avenida aberta, o zoom volta a apertar. Ele não tem nada a
+     dizer ainda; o Dog, sim — pulou atrás dele. Nenhuma linha explica isso. */
+  {
+    id: 'ato2-chegada',
+    at: { x: 6380, xMax: 8600 },
+    needs: ['eye'],
+    flag: 'st_ato2_chegada',
+    steps: [
+      { wait: 1600 },
+      { think: 'thinkUnder1', ms: 4000 },
+      { think: 'thinkUnder2', ms: 4200 }
+    ]
+  },
+
+  /* ---- O BOM LADRÃO ----
+     GDD 2.1: mentor; ensina o Robô a PARAR DE FUGIR; ligado a Orelhas/Braços.
+     Ele é o terceiro que não corre — depois do Dog e do Detetive — e o
+     primeiro que fala com o robô como se ele fosse alguém. */
+  {
+    id: 'ato2-ladrao',
+    at: { x: 6700, xMax: 8600 },
+    needs: ['eye'],
+    flag: 'st_ato2_ladrao',
+    steps: [
+      { wait: 500 },
+      { spawn: { id: 'lad', key: 'ladrao', x: 7020, y: 1372 }, ms: 900 },
+      { face: { id: 'lad', dir: -1 }, ms: 1200 },
+      { say: { who: 'whoThief', key: 'thief1' }, ms: 2800 },
+      { move: { id: 'lad', x: 6880, ms: 1300 }, ms: 1100 },
+      { say: { who: 'whoThief', key: 'thief2' }, ms: 3000 },
+      { say: { who: 'whoThief', key: 'thief3' }, ms: 3200 },
+      { think: 'thinkThief', ms: 3600 },
+      { say: { who: 'whoThief', key: 'thief4' }, ms: 3000 },
+      { move: { id: 'lad', x: 7160, ms: 1600 }, ms: 1400 },
+      { say: { who: 'whoThief', key: 'thief5' }, ms: 1200 },
+      { setFlag: 'bracosOfertados' },     // só agora as bielas existem no chão
+      { wait: 1800 },
+      { exit: { id: 'lad' }, ms: 500 }
+    ]
+  },
+
+  /* ---- BRAÇOS ----
+     A lição vira corpo: ele para de fugir quando ganha com o que sustentar. */
+  {
+    id: 'ato2-bracos',
+    needs: ['arms'],
+    flag: 'st_ato2_bracos',
+    steps: [
+      { wait: 1300 },
+      { think: 'thinkArms1', ms: 3800 },
+      { think: 'thinkArms2', ms: 4200 }
     ]
   }
 ];

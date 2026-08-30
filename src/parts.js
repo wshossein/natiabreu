@@ -13,6 +13,7 @@ const PARTS = {
   ear:    { tier: 1, sense: 'audio', ability: 'som do jogo',       cost: 'o mundo passa a ter ruído; nem tudo se quer ouvir' },
   mouth:  { tier: 1, sense: null,    ability: 'falar',             cost: 'o que se diz passa a poder ser usado contra você' },
   legs:   { tier: 1, sense: null,    ability: 'pulo alto',         cost: 'cansaço: o pulo piora sob esforço' },
+  arms:   { tier: 2, sense: null,    ability: 'puxar, sustentar',   cost: 'o que se carrega, pesa — e o que se alcança, se perde' },
   eye2:   { tier: 2, sense: 'video', ability: 'a tela inteira',     cost: 'ver o que se preferia não ter visto' },
   hands:  { tier: 2, sense: null,    ability: 'agarrar, destravar', cost: 'o que se agarra também machuca' }
 };
