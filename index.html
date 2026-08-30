@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Robô de Lata — protótipo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,300;0,400;0,500;1,300&family=IBM+Plex+Mono:wght@400&display=swap">
+  <style>
+    /* mundo único e escuro por design (era lata, P&B) */
+    html, body { margin: 0; padding: 0; height: 100%; background: #0a0a0c; overscroll-behavior: none; }
+    body { display: flex; align-items: center; justify-content: center; touch-action: none; }
+    #game { width: 100vw; height: 100vh; }
+    #game canvas { display: block; margin: 0 auto; }
+    #rotate {
+      display: none; position: fixed; inset: 0; z-index: 99; background: #0a0a0c;
+      color: #8a8a92; font-family: Jost, sans-serif; font-size: 18px; letter-spacing: 2px;
+      align-items: center; justify-content: center; text-align: center; padding: 24px;
+    }
+    @media (orientation: portrait) and (max-width: 700px) { #rotate { display: flex; } }
+  </style>
+</head>
+<body>
+  <div id="rotate">gire o celular&nbsp;·&nbsp;rotate your phone&nbsp; ⟳</div>
+  <div id="game"></div>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.87.0/dist/phaser.min.js"></script>
+  <script src="src/const.js"></script>
+  <script src="src/i18n.js"></script>
+  <script src="src/audio.js"></script>
+  <script src="src/scenes.js"></script>
+  <script src="src/main.js"></script>
+</body>
+</html>
